@@ -126,6 +126,15 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - Implementation approaches
 - Effort estimates
 
+### 🔄 [STREAM_RESILIENCE_DESIGN.md](./STREAM_RESILIENCE_DESIGN.md)
+**Stream buffering + resume design (Planned)**
+
+- Server-side buffer manager
+- Client-side resume logic
+- Edge cases & error handling
+- Complete implementation plan
+- **Status**: 📋 Planned (Low Priority)
+
 ---
 
 ## 🎯 Quick Start
