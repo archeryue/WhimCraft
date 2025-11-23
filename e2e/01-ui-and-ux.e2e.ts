@@ -69,8 +69,8 @@ test.describe('Login Page', () => {
     const heading = page.locator('h1, h2').first();
     await expect(heading).toBeVisible();
 
-    // Check for sign-in button
-    const signInButton = page.getByRole('button', { name: /sign in/i });
+    // Check for sign-in button (Google sign-in specifically)
+    const signInButton = page.getByRole('button', { name: /sign in with google/i });
     await expect(signInButton).toBeVisible();
   });
 
@@ -81,7 +81,7 @@ test.describe('Login Page', () => {
   });
 
   test('sign in button should be clickable', async ({ page }) => {
-    const signInButton = page.getByRole('button', { name: /sign in/i });
+    const signInButton = page.getByRole('button', { name: /sign in with google/i });
 
     // Button should not be disabled
     await expect(signInButton).toBeEnabled();
@@ -109,7 +109,7 @@ test.describe('Responsive Design', () => {
 
       // Main elements should be visible
       await expect(page.locator('h1, h2').first()).toBeVisible();
-      await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /sign in with google/i })).toBeVisible();
 
       // No horizontal scrollbar
       const hasHorizontalScroll = await page.evaluate(() => {
