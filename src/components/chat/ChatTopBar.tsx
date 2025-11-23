@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ModelTier } from "@/config/models";
 
 interface ChatTopBarProps {
   userName?: string;

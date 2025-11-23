@@ -10,6 +10,7 @@ import { ProModeToggle } from "@/components/chat/ProModeToggle";
 import { LoadingPage } from "@/components/ui/loading";
 import { MessageClient, ConversationClient } from "@/types";
 import { FileAttachment } from "@/types/file";
+import { ModelTier } from "@/config/models";
 
 export default function ChatPage() {
   const { data: session, status } = useSession();

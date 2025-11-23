@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModelTier } from "@/config/models";
 
 interface ProModeToggleProps {
   modelTier?: 'main' | 'pro';
