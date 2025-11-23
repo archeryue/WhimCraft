@@ -56,6 +56,17 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - Cost: FREE within 3,000 searches/month
 - **Status**: ✅ Implemented
 
+### 🌐 [WEB_FETCH_IMPROVEMENTS.md](./WEB_FETCH_IMPROVEMENTS.md)
+**Web content fetching improvements (Planned)**
+
+- Hybrid fallback system with free-tier services
+- Response caching (1h-24h TTL)
+- Alternative sources (Archive.org, Nitter, RSS)
+- Smarter retry logic per HTTP status code
+- Expected success rate: 85-90% (up from ~60%)
+- Cost: +$0-5/month (free tiers)
+- **Status**: 📋 Design Complete, Ready for Implementation
+
 ### 📊 [PROGRESS_TRACKING.md](./PROGRESS_TRACKING.md)
 **Real-time progress feedback**
 
@@ -200,3 +211,4 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 **Last Updated**: November 23, 2025
 **Test Summary**: 145+ unit tests, 71 E2E tests in 6 suites (100% pass rate)
 **Documentation Status**: ✅ Current and maintained
+**Recent Additions**: Web-Fetch Improvements design document
