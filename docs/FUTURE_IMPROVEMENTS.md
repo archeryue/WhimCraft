@@ -1,64 +1,6 @@
 # Future Improvements
 
-This document tracks planned enhancements and known issues that need improvement.
-
----
-
-## Completed Features
-
-### ✅ Per-Conversation PRO Model Toggle (Completed: Nov 22, 2025)
-
-**Status**: IMPLEMENTED using Gemini 3.0 Pro and Gemini 3.0 Pro Image
-
-**Implementation Summary**:
-- Added `model_tier` field to Conversation schema ('main' | 'pro')
-- Created floating ProModeToggle component at top-right corner
-- PRO mode uses Gemini 3.0 Pro for chat and Gemini 3.0 Pro Image for image generation
-- Per-conversation persistence in Firestore via PATCH endpoint
-- Visual indicators: Purple gradient button when PRO ON, outline when OFF
-- Confirmation dialog when enabling (with cost warning), no confirmation when disabling
-- Immediate UI feedback before conversation exists (using pendingModelTier state)
-- Automatic model selection based on conversation tier in agent system
-
-**Files Created**:
-- `src/components/chat/ProModeToggle.tsx` - Floating PRO toggle component with dialog
-- `src/components/ui/dialog.tsx` - Radix UI dialog component
-- `tests/pro-mode.spec.ts` - 19 comprehensive E2E tests
-- `src/__tests__/config/models.test.ts` - Model tier unit tests
-- `src/__tests__/lib/agent/model-tier.test.ts` - Agent model tier tests
-- `src/__tests__/lib/agent/tools/image-generate-tier.test.ts` - Image tier tests
-
-**Files Modified**:
-- `src/config/models.ts` - Added PRO and IMAGE_PRO tiers
-- `src/types/index.ts` - Added model_tier to Conversation types
-- `src/types/agent.ts` - Added modelTier to AgentConfig and ToolContext
-- `src/app/chat/page.tsx` - Integration with floating toggle and Firestore persistence
-- `src/app/api/chat/route.ts` - Pass model tier to agent
-- `src/app/api/conversations/route.ts` - Accept model_tier in POST
-- `src/app/api/conversations/[id]/route.ts` - PATCH endpoint for updating tier
-- `src/lib/agent/core/agent.ts` - Model selection based on tier
-- `src/lib/agent/tools/image-generate.ts` - Use IMAGE_PRO when in PRO mode
-- `src/components/chat/ChatTopBar.tsx` - Removed PRO toggle (kept for other functionality)
-- `playwright.config.ts` - Updated to reuse existing server
-
-**Testing**:
-- 19 E2E tests (all passing, ~3.2 min total runtime)
-  - 3 critical bug prevention tests (would have caught original bug)
-  - 6 UI and dialog tests
-  - 3 visual indicator tests
-  - 2 accessibility tests
-  - 2 state management tests
-  - 2 edge case tests
-- 3 unit tests for model tier logic
-- Fast UI-only tests (~10s per test, no real API calls)
-
-**Pricing**:
-- Default (main): $0.075/$0.30 per 1M tokens (Gemini 2.5 Flash)
-- PRO mode: $2.00/$12.00 per 1M tokens (Gemini 3.0 Pro)
-- IMAGE (main): $0.000002 per image (Gemini 2.5 Flash Image, 2K)
-- IMAGE_PRO: $0.000134 per image (Gemini 3.0 Pro Image, 4K support)
-
----
+This document tracks planned enhancements and future features for WhimCraft.
 
 ## High Priority
 
