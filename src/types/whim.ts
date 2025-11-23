@@ -9,6 +9,7 @@ export interface Whim {
   content?: string; // Markdown content (legacy, for backward compatibility)
   blocks?: JSONContent; // TipTap JSON blocks (new format)
   folderId?: string;
+  isFavorite?: boolean; // Whether this whim is marked as favorite
   conversationId?: string; // Optional reference to source conversation
   createdAt: Timestamp | string; // Timestamp on server, string on client
   updatedAt: Timestamp | string; // Timestamp on server, string on client
@@ -29,6 +30,7 @@ export interface WhimClient {
   content?: string; // Markdown content (legacy, for backward compatibility)
   blocks?: JSONContent; // TipTap JSON blocks (new format)
   folderId?: string;
+  isFavorite?: boolean; // Whether this whim is marked as favorite
   conversationId?: string;
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
@@ -54,6 +56,7 @@ export interface UpdateWhimRequest {
   content?: string; // Legacy markdown
   blocks?: JSONContent; // New JSON blocks format
   folderId?: string;
+  isFavorite?: boolean; // Toggle favorite status
 }
 
 export interface CreateFolderRequest {
