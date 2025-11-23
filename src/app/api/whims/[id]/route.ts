@@ -73,6 +73,7 @@ export async function PUT(
     if (body.content !== undefined) updates.content = body.content; // Legacy markdown
     if (body.blocks !== undefined) updates.blocks = body.blocks; // New JSON blocks format
     if (body.folderId !== undefined) updates.folderId = body.folderId;
+    if (body.isFavorite !== undefined) updates.isFavorite = body.isFavorite;
 
     await db.collection('whims').doc(params.id).update(updates);
 

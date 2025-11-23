@@ -17,7 +17,7 @@ import { common, createLowlight } from 'lowlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { WhimClient, FolderClient } from '@/types/whim';
 import { JSONContent } from '@tiptap/core';
-import { MoreVertical, Trash2 } from 'lucide-react';
+import { MoreVertical, Trash2, Star } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 
@@ -59,7 +59,7 @@ function isJSONEqual(a: JSONContent, b: JSONContent): boolean {
 interface WhimEditorProps {
   whim: WhimClient;
   folders: FolderClient[];
-  onUpdate: (whimId: string, updates: { title?: string; content?: string; blocks?: any; folderId?: string }) => void;
+  onUpdate: (whimId: string, updates: { title?: string; content?: string; blocks?: any; folderId?: string; isFavorite?: boolean }) => void;
   onDelete: (whimId: string) => void;
   onOpenAIChat?: (selectedText?: string, range?: { start: number; end: number }) => void;
 }
@@ -480,6 +480,21 @@ export function WhimEditor({
                   />
                   {/* Dropdown */}
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        if (editor) {
+                          handleSave(title, editor.getJSON(), selectedFolderId);
+                        }
+                        onUpdate(whim.id, { isFavorite: !whim.isFavorite });
+                      }}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors ${
+                        whim.isFavorite ? 'text-yellow-600' : 'text-slate-700'
+                      }`}
+                    >
+                      <Star className={`w-4 h-4 ${whim.isFavorite ? 'fill-yellow-400' : ''}`} />
+                      {whim.isFavorite ? 'Unfavorite' : 'Favorite'}
+                    </button>
                     <button
                       onClick={() => {
                         setShowDropdown(false);
