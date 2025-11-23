@@ -156,7 +156,7 @@ describe('No Hardcoded Models', () => {
         .map(f => `\n  ${f.file}`)
         .join('');
 
-      fail(
+      throw new Error(
         `Found ${missingImports.length} file(s) using model terms without importing from config:${errorMessage}`
       );
     }
