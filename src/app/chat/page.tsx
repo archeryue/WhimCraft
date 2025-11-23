@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
+import { ProModeToggle } from "@/components/chat/ProModeToggle";
 import { LoadingPage } from "@/components/ui/loading";
 import { MessageClient, ConversationClient } from "@/types";
 import { FileAttachment } from "@/types/file";
@@ -15,8 +16,10 @@ export default function ChatPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<MessageClient[]>([]);
   const [conversations, setConversations] = useState<ConversationClient[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<ConversationClient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pendingModelTier, setPendingModelTier] = useState<'main' | 'pro'>('main'); // PRO mode preference before conversation exists
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Redirect to login if not authenticated
@@ -114,7 +117,9 @@ export default function ChatPage() {
     // Reset to new conversation state without creating in database
     // Conversation will be created when first message is sent
     setConversationId(null);
+    setCurrentConversation(null);
     setMessages([]);
+    setPendingModelTier('main'); // Reset to main tier for new conversation
   };
 
   const loadConversation = async (id: string) => {
@@ -123,6 +128,26 @@ export default function ChatPage() {
       if (response.ok) {
         const data = await response.json();
         setConversationId(id);
+
+        const modelTier = data.model_tier || 'main';
+
+        // Set current conversation with proper date conversion
+        setCurrentConversation({
+          id: data.id,
+          user_id: data.user_id,
+          title: data.title,
+          model: data.model,
+          model_tier: modelTier,
+          created_at: new Date(data.created_at),
+          updated_at: new Date(data.updated_at),
+          type: data.type,
+          whimId: data.whimId,
+          whimContext: data.whimContext,
+        });
+
+        // Sync pending tier with loaded conversation's tier
+        setPendingModelTier(modelTier);
+
         setMessages(
           data.messages.map((msg: any) => ({
             ...msg,
@@ -149,6 +174,7 @@ export default function ChatPage() {
         await loadConversations();
         if (conversationId === id) {
           setConversationId(null);
+          setCurrentConversation(null);
           setMessages([]);
           // Create a new conversation
           createConversation();
@@ -156,6 +182,36 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("Failed to delete conversation:", error);
+    }
+  };
+
+  const handleModelTierChange = async (tier: 'main' | 'pro') => {
+    // Always update pending tier (for new conversations)
+    setPendingModelTier(tier);
+
+    // If conversation exists, update it immediately
+    if (conversationId) {
+      try {
+        const response = await fetch(`/api/conversations/${conversationId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model_tier: tier }),
+        });
+
+        if (response.ok) {
+          // Update local state
+          setCurrentConversation(prev => prev ? { ...prev, model_tier: tier } : null);
+          // Also update in conversations list
+          setConversations(prev => prev.map(conv =>
+            conv.id === conversationId ? { ...conv, model_tier: tier } : conv
+          ));
+        }
+      } catch (error) {
+        console.error("Failed to update model tier:", error);
+      }
+    } else {
+      // No conversation yet - just update local state for immediate UI feedback
+      setCurrentConversation(prev => prev ? { ...prev, model_tier: tier } : null);
     }
   };
 
@@ -169,6 +225,7 @@ export default function ChatPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "New Conversation",
+            model_tier: pendingModelTier, // Apply pending tier
           }),
         });
 
@@ -176,6 +233,17 @@ export default function ChatPage() {
           const data = await response.json();
           currentConversationId = data.id;
           setConversationId(data.id);
+
+          // Set current conversation with the pending tier
+          setCurrentConversation({
+            id: data.id,
+            user_id: data.user_id,
+            title: data.title,
+            model: data.model,
+            model_tier: pendingModelTier,
+            created_at: new Date(data.created_at),
+            updated_at: new Date(data.updated_at),
+          });
         } else {
           console.error("Failed to create conversation");
           return;
@@ -361,9 +429,17 @@ export default function ChatPage() {
 
         {/* Main Chat Area */}
         <div className="flex-1 min-w-0 flex flex-col relative bg-slate-50">
+          {/* Floating PRO Mode Toggle - Top Right */}
+          <div className="absolute top-4 right-6 z-10">
+            <ProModeToggle
+              modelTier={currentConversation?.model_tier || pendingModelTier}
+              onModelTierChange={handleModelTierChange}
+            />
+          </div>
+
           {/* Messages */}
           <div
-            className="flex-1 overflow-y-auto cursor-default pb-32 messages-container"
+            className="flex-1 overflow-y-auto cursor-default pb-32 pt-4 messages-container"
             onMouseDown={(e) => {
               // Prevent clicks in empty area from focusing the input, but allow text selection
               const target = e.target as HTMLElement;

@@ -49,6 +49,7 @@ export async function GET(
       user_id: conversationData.user_id,
       title: conversationData.title,
       model: conversationData.model,
+      model_tier: conversationData.model_tier || 'main',
       created_at: conversationData.created_at.toDate().toISOString(),
       updated_at: conversationData.updated_at.toDate().toISOString(),
       messages,
@@ -101,6 +102,53 @@ export async function DELETE(
     return Response.json({ message: "Conversation deleted successfully" });
   } catch (error) {
     console.error("Error deleting conversation:", error);
+    return new Response("Internal server error", { status: 500 });
+  }
+}
+
+// PATCH - Update conversation (e.g., model_tier)
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const { model_tier } = await req.json();
+
+    if (!model_tier || (model_tier !== 'main' && model_tier !== 'pro')) {
+      return new Response("Invalid model_tier value", { status: 400 });
+    }
+
+    const conversationRef = db.collection(COLLECTIONS.CONVERSATIONS).doc(params.id);
+    const conversationDoc = await conversationRef.get();
+
+    if (!conversationDoc.exists) {
+      return new Response("Conversation not found", { status: 404 });
+    }
+
+    const conversationData = conversationDoc.data();
+
+    if (conversationData?.user_id !== session.user.id) {
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    // Update the conversation
+    await conversationRef.update({
+      model_tier,
+      updated_at: new Date(),
+    });
+
+    return Response.json({
+      message: "Conversation updated successfully",
+      model_tier
+    });
+  } catch (error) {
+    console.error("Error updating conversation:", error);
     return new Response("Internal server error", { status: 500 });
   }
 }

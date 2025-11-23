@@ -63,7 +63,7 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:8080',
     cwd: './', // Ensure command runs from project root where .env files are
-    reuseExistingServer: false, // Force fresh server with ENABLE_TEST_AUTH from .env.development.local
+    reuseExistingServer: true, // Reuse existing server for faster test runs
     stdout: 'pipe', // Capture stdout for debugging
     stderr: 'pipe', // Capture stderr for debugging
     timeout: 120 * 1000,

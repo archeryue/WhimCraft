@@ -80,9 +80,10 @@ Guidelines:
           enhancedPrompt += ', square composition';
       }
 
-      // Get the IMAGE tier provider
+      // Get the IMAGE tier provider (use IMAGE_PRO if conversation is in PRO mode)
+      const modelTier = this.context?.modelTier === 'pro' ? ModelTier.IMAGE_PRO : ModelTier.IMAGE;
       const provider = ProviderFactory.createDefaultProvider(
-        GEMINI_MODELS[ModelTier.IMAGE]
+        GEMINI_MODELS[modelTier]
       );
 
       // Use generateResponse with image generation system prompt
