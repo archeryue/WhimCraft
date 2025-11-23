@@ -172,5 +172,23 @@ This is LOW PRIORITY because Phase 1 already provides core functionality. These 
 
 ---
 
+### 2. Stream Resilience: Server-Side Buffering + Resume
+
+**Description**: Make chat streaming resilient to tab switches and network interruptions by implementing server-side buffering with client-side resume capability.
+
+**Issue**: When users switch browser tabs during AI response generation, the HTTP stream may disconnect (especially on Chrome/Safari), losing the partial response.
+
+**Solution**: Server buffers all chunks with TTL. Client can resume from last received chunk if connection drops.
+
+**Design Document**: See [STREAM_RESILIENCE_DESIGN.md](./STREAM_RESILIENCE_DESIGN.md) for detailed architecture, implementation plan, and edge cases.
+
+**Estimated Effort**: 8-12 hours
+
+**Benefits**: Resilient to tab switches, network hiccups, better mobile experience, professional-grade reliability.
+
+**Priority Rationale**: LOW - Workaround exists (don't switch tabs), affects edge case, but would significantly improve UX when implemented.
+
+---
+
 **Last Updated**: November 22, 2025
 **Maintained By**: Archer & Claude Code
