@@ -9,6 +9,7 @@ A bilingual (English/Chinese) AI agent with advanced memory, personalization, an
 - 🔍 **Web Search Integration**: Real-time web search with Google Custom Search API
 - 📊 **Progress Tracking**: Real-time visual feedback during AI response generation
 - 🎨 **Native Image Generation**: Built-in Gemini 2.5 Flash Image generation
+- 🚀 **PRO Mode**: Access to advanced Gemini 2.0 Flash Pro and Thinking models
 - 🌏 **Bilingual Support**: Full English and Chinese support (175+ keywords)
 - 📎 **File Attachments**: Upload and analyze images, PDFs with multimodal AI
 - 💬 **Streaming Responses**: Real-time AI chat with syntax highlighting and LaTeX support
@@ -28,7 +29,7 @@ A bilingual (English/Chinese) AI agent with advanced memory, personalization, an
 - **AI**: Google Gemini API (2.5 Flash, Image, Lite)
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Unit Testing**: Jest + TypeScript (145+ tests, 100% pass rate)
-- **E2E Testing**: Playwright (26 tests)
+- **E2E Testing**: Playwright (71 tests in 6 suites, 100% pass rate)
 - **Deployment**: Cloud Run (GCP)
 
 ## Local Development Setup
@@ -187,7 +188,7 @@ src/
     agent.ts              # Agent types
     prompt-analysis.ts    # Analysis types
   __tests__/              # Jest unit tests (145+ tests)
-e2e/                      # Playwright E2E tests (26 tests)
+e2e/                      # Playwright E2E tests (71 tests, 6 suites)
 ```
 
 ## Key Features Explained
@@ -306,25 +307,30 @@ npx jest --watch
 ### E2E Tests (Playwright)
 
 ```bash
-# Run all E2E tests (headless)
-npm run test:e2e
+# Run all E2E tests (headless, ~2 minutes)
+npm run test:e2e:fast
+# or
+npx playwright test
 
 # Interactive UI mode
-npm run test:e2e:ui
+npx playwright test --ui
 
 # Run with visible browser
-npm run test:e2e:headed
+npx playwright test --headed
 
 # Debug mode with inspector
-npm run test:e2e:debug
+npx playwright test --debug
 ```
 
-**Current Status**: 26 tests (22 passed, 2 minor failures, 2 skipped)
-- Application basics, login page, performance
-- SEO, accessibility, error handling
-- Progress tracking (requires auth)
+**Current Status**: 71 tests in 6 organized suites (100% pass rate)
+- `01-ui-and-ux.e2e.ts` - UI/UX fundamentals (14 tests)
+- `02-authenticated-chat.e2e.ts` - Chat flows (5 tests)
+- `03-visual-and-accessibility.e2e.ts` - Accessibility (8 tests)
+- `04-core-features.e2e.ts` - Core functionality (16 tests)
+- `05-whim-editor.e2e.ts` - Whim editor (7 tests)
+- `06-pro-mode.e2e.ts` - PRO mode (19 tests)
 
-See [docs/TESTING_PLAN.md](./docs/TESTING_PLAN.md) for detailed testing strategy.
+See [docs/TESTING.md](./docs/TESTING.md) for detailed testing guide.
 
 ## Deployment
 
