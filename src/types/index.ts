@@ -26,6 +26,7 @@ export interface Conversation {
   user_id: string;
   title: string;
   model: string;
+  model_tier?: 'main' | 'pro';  // PRO mode preference (optional, defaults to 'main')
   created_at: Timestamp;
   updated_at: Timestamp;
   // Whim-specific fields (optional)
@@ -64,6 +65,7 @@ export interface ConversationClient {
   user_id: string;
   title: string;
   model: string;
+  model_tier?: 'main' | 'pro';  // PRO mode preference (optional, defaults to 'main')
   created_at: Date;
   updated_at: Date;
   // Whim-specific fields (optional)

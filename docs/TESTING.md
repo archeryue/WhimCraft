@@ -9,7 +9,16 @@ This document describes the comprehensive testing infrastructure for WhimCraft, 
 WhimCraft has a robust testing strategy with two layers of testing:
 
 1. **Unit Tests** (Jest) - 145+ tests with 100% pass rate
-2. **End-to-End Tests** (Playwright) - 17+ core feature tests with automated authentication
+2. **End-to-End Tests** (Playwright) - 71 comprehensive tests organized into 6 suites with automated authentication
+
+**Quick Start:**
+```bash
+# Fast E2E tests (~2 minutes)
+npm run test:e2e:fast
+
+# All tests (including unit tests)
+npm run build && npx jest && npm run test:e2e
+```
 
 ---
 
@@ -68,66 +77,91 @@ WhimCraft now has fully automated end-to-end testing with secure test authentica
 ### Running E2E Tests
 
 ```bash
-# Run all E2E tests (headless)
-npm run test:e2e
+# Run all E2E tests (headless, ~2 minutes)
+npm run test:e2e:fast
+# or
+npx playwright test
 
 # Run with visible browser
-npm run test:e2e:headed
+npx playwright test --headed
 
 # Interactive UI mode
-npm run test:e2e:ui
+npx playwright test --ui
 
 # Debug mode with inspector
-npm run test:e2e:debug
+npx playwright test --debug
 
 # Run specific test file
-npx playwright test tests/core-features.spec.ts
+npx playwright test e2e/01-ui-and-ux.e2e.ts
 
-# Run single test
-npx playwright test tests/core-features.spec.ts:37
+# Run single test by line number
+npx playwright test e2e/01-ui-and-ux.e2e.ts:37
 ```
 
 ### Test Suites
 
-#### 1. Core Features Test Suite (`tests/core-features.spec.ts`)
+The E2E tests are organized into 6 comprehensive suites with numbered prefixes for clarity:
 
-**17 tests covering essential functionality:**
+#### 1. UI and UX (`e2e/01-ui-and-ux.e2e.ts`)
 
-**Chat Functionality** (4 tests)
-- ✅ Page loads successfully
-- ✅ Send message and receive AI response
+**14 tests covering basic UI/UX:**
+- ✅ Login page display and functionality
+- ✅ Sign-in button interaction
+- ✅ Responsive design (mobile/tablet/desktop)
+- ✅ SEO metadata (title, description, favicon)
+- ✅ Basic page structure
+- ✅ Keyboard navigation
+
+#### 2. Authenticated Chat (`e2e/02-authenticated-chat.e2e.ts`)
+
+**5 tests covering authenticated chat flows:**
+- ✅ Page loads with authentication
+- ✅ Send message and receive response
 - ✅ Handle multiple messages in sequence
-- ✅ Show progress indicators during response
+- ✅ Create new conversations
+- ✅ Maintain conversation history
 
-**Conversation Management** (3 tests)
-- ✅ Create new conversation
-- ✅ Display conversation in sidebar
-- ✅ Maintain conversation history on page reload
+#### 3. Visual and Accessibility (`e2e/03-visual-and-accessibility.e2e.ts`)
 
-**User Profile** (3 tests)
-- ✅ Access profile page
-- ✅ Display memory profile page
-- ✅ Display memory/facts section
+**8 tests covering visual feedback and accessibility:**
+- ✅ Progress tracking badges
+- ✅ Real-time progress updates
+- ✅ ARIA labels and roles
+- ✅ Keyboard navigation
+- ✅ Screen reader compatibility
+- ✅ Focus management
 
-**UI/UX Essentials** (4 tests)
-- ✅ Responsive on mobile viewport
-- ✅ Handle long messages gracefully
-- ✅ Basic page structure with interactive elements
-- ✅ Support keyboard navigation
+#### 4. Core Features (`e2e/04-core-features.e2e.ts`)
 
-**Error Handling** (2 tests)
-- ✅ Handle network errors gracefully
-- ✅ Handle empty message submission
+**16 tests covering essential app features:**
+- ✅ Chat functionality (send/receive, streaming)
+- ✅ Conversation management (create, list, persist)
+- ✅ User profile and memory pages
+- ✅ Error handling (network errors, empty input)
+- ✅ Responsive design
+- ✅ Long message handling
 
-**Test Results**: 17/17 passing (100% success rate)
+#### 5. Whim Editor (`e2e/05-whim-editor.e2e.ts`)
 
-#### 2. Comprehensive Test Suite (`tests/comprehensive.spec.ts`)
+**7 tests covering Whim editor features:**
+- ✅ Math rendering (KaTeX/LaTeX)
+- ✅ Code blocks with syntax highlighting
+- ✅ Text formatting (bold, italic, headings)
+- ✅ Image insertion
+- ✅ Editor persistence
 
-Additional test coverage (20 tests)
+#### 6. PRO Mode (`e2e/06-pro-mode.e2e.ts`)
 
-#### 3. Image Generation Test Suite (`tests/image-generation.spec.ts`)
+**19 tests covering PRO mode functionality:**
+- ✅ PRO button display and positioning
+- ✅ Dialog interactions
+- ✅ Model selection (Gemini 2.0 Flash Pro / Thinking Exp)
+- ✅ State management
+- ✅ Accessibility (keyboard navigation, ARIA)
+- ✅ Visual indicators
+- ✅ Edge cases
 
-Tests for AI image generation features
+**Test Results**: 71/71 passing (100% success rate)
 
 ### Mock Authentication System
 
@@ -224,13 +258,16 @@ npm run test:e2e
 #### Files Structure
 
 ```
-tests/
+e2e/
+  01-ui-and-ux.e2e.ts              # 14 UI/UX tests
+  02-authenticated-chat.e2e.ts     # 5 authenticated chat tests
+  03-visual-and-accessibility.e2e.ts # 8 accessibility tests
+  04-core-features.e2e.ts          # 16 core feature tests
+  05-whim-editor.e2e.ts            # 7 Whim editor tests
+  06-pro-mode.e2e.ts               # 19 PRO mode tests
   .auth/
-    user.json              # Generated auth state (gitignored)
-  auth.setup.ts            # Authentication setup
-  core-features.spec.ts    # 17 core feature tests
-  comprehensive.spec.ts    # Additional test suite
-  image-generation.spec.ts # Image generation tests
+    user.json                      # Generated auth state (gitignored)
+  auth.setup.ts                    # Authentication setup
 
 .env.test.example          # Template for test config
 scripts/
@@ -429,14 +466,26 @@ test.describe('Feature Name', () => {
 ### Test Execution Time
 
 - **Unit Tests**: ~10 seconds (all 145 tests)
-- **E2E Tests**: ~3 minutes (17 core tests)
-- **Total**: ~3-4 minutes for full test suite
+- **E2E Tests**: ~2 minutes (71 tests, 6 suites)
+- **Total**: ~2-3 minutes for full test suite
 
 ### Optimization
 
+- Tests organized into logical suites with numbered prefixes
 - Tests run in parallel where possible
 - Auth state reused across tests
 - Dev server reused between test runs
+- Optimized wait strategies (conditional waits vs blind timeouts)
+
+### Speed Improvements
+
+After the November 2025 refactoring:
+- **Before**: 28+ test files, many slow/redundant tests
+- **After**: 6 well-organized test suites
+- **Speed**: 87% faster execution time
+- **Pass Rate**: 100% (71/71 tests passing)
+
+See `docs/TEST_SPEED_FINAL_SUMMARY.md` for detailed optimization analysis.
 
 ---
 
@@ -506,7 +555,17 @@ test.describe('Feature Name', () => {
 
 ---
 
-**Last Updated**: November 22, 2025
-**Test Coverage**: 17 E2E tests, 145+ unit tests
+---
+
+## Related Documentation
+
+- `E2E_TEST_ANALYSIS_AND_PLAN.md` - Detailed analysis of E2E test refactoring
+- `TEST_SPEED_FINAL_SUMMARY.md` - Speed optimization summary
+- `SECURITY_ANALYSIS_TEST_AUTH.md` - Security analysis of test authentication
+
+---
+
+**Last Updated**: November 23, 2025
+**Test Coverage**: 71 E2E tests (6 suites), 145+ unit tests
 **Pass Rate**: 100%
 **Maintained By**: Archer & Claude Code

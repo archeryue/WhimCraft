@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
         user_id: data.user_id,
         title: data.title,
         model: data.model,
+        model_tier: data.model_tier || 'main',
         created_at: data.created_at.toDate().toISOString(),
         updated_at: data.updated_at.toDate().toISOString(),
         type: data.type || 'chat',
@@ -70,13 +71,14 @@ export async function POST(req: NextRequest) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const { title, type, whimId, whimContext } = await req.json();
+    const { title, type, whimId, whimContext, model_tier } = await req.json();
 
     // Build conversation data
     const conversationData: Record<string, unknown> = {
       user_id: session.user.id,
       title: title || (type === 'whim' ? "Whim Assistant" : "New Conversation"),
       model: MODEL_NAME,
+      model_tier: model_tier || 'main', // Default to 'main' if not specified
       created_at: new Date(),
       updated_at: new Date(),
       type: type || 'chat',

@@ -11,6 +11,8 @@
     "test": "jest",
     "test:memory": "npx tsx scripts/test-memory.ts",
     "test:e2e": "playwright test",
+    "test:e2e:fast": "playwright test --grep-invert @slow",
+    "test:e2e:slow": "playwright test --grep @slow",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug"

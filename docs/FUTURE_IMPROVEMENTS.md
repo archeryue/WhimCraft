@@ -1,70 +1,10 @@
 # Future Improvements
 
-This document tracks planned enhancements and known issues that need improvement.
-
----
+This document tracks planned enhancements and future features for WhimCraft.
 
 ## High Priority
 
-### 1. Per-Conversation PRO Model Toggle
-
-**Description**: Add a UI button/toggle to enable a more powerful "PRO" tier model (e.g., Gemini 2.5 Pro) for specific conversations where higher quality is needed, while keeping the default fast/free tier for general use.
-
-**Current Behavior**:
-- All conversations use Gemini 2.5 Flash (main tier)
-- Model selection is automatic based on task (image gen, analysis, etc.)
-- No way for users to request higher quality model
-
-**Proposed Feature**:
-- Add "PRO Mode" toggle in chat interface (near settings or in top bar)
-- Stores preference per conversation in Firestore
-- Visual indicator when PRO mode is active
-- Cost estimation shown before enabling
-
-**Benefits**:
-- Users control quality vs cost tradeoff
-- Better responses for complex queries
-- Keeps free tier as default for cost efficiency
-- Transparent pricing - users know when they're using expensive models
-
-**UI Mockup**:
-```
-[Chat Top Bar]
-  [⚡ PRO Mode: OFF] ← Button
-
-When clicked:
-  Modal:
-    "Enable PRO Mode for this conversation?
-     - Higher quality responses
-     - Better reasoning for complex queries
-     - Estimated cost: ~$0.02-0.05 per message
-     - Can be toggled on/off anytime
-     [Cancel] [Enable PRO Mode]"
-```
-
-**Model Tiers**:
-- **Default**: Gemini 2.5 Flash (fast, free tier)
-- **PRO**: Gemini 2.5 Pro or Gemini 2.5 Pro Experimental (higher quality, paid)
-
-**Implementation Plan**:
-1. Add `model_tier` field to Conversation schema
-2. Create UI toggle component in chat top bar
-3. Update model selection logic to respect conversation preference
-4. Add cost estimation display
-5. Store preference in Firestore
-6. Add visual indicator (badge/icon) when PRO is active
-
-**Files to Modify**:
-- `src/types/index.ts` - Add model_tier to Conversation type
-- `src/components/chat/ChatTopBar.tsx` - Add PRO toggle button
-- `src/app/api/chat/route.ts` - Check conversation's model_tier
-- `src/config/models.ts` - Add PRO tier model configuration
-- `src/lib/providers/provider-factory.ts` - Support PRO tier
-- Firestore schema: Add model_tier to conversations collection
-
-**Estimated Effort**: 3-4 hours
-
-**Cost Impact**: User-controlled, opt-in for specific conversations
+_(No high priority items at this time)_
 
 ---
 

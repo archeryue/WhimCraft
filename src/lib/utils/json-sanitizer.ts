@@ -222,10 +222,13 @@ export function parseJsonFromLLM(rawText: string, context: string = "LLM"): any 
     const sanitized = sanitizeJsonString(rawText);
     return JSON.parse(sanitized);
   } catch (error) {
-    console.error(`[${context}] JSON parsing failed after sanitization`);
-    console.error(`[${context}] Raw text:`, rawText);
-    console.error(`[${context}] Sanitized text:`, sanitizeJsonString(rawText));
-    console.error(`[${context}] Parse error:`, error);
+    // Only log errors in non-test environments
+    if (process.env.NODE_ENV !== 'test') {
+      console.error(`[${context}] JSON parsing failed after sanitization`);
+      console.error(`[${context}] Raw text:`, rawText);
+      console.error(`[${context}] Sanitized text:`, sanitizeJsonString(rawText));
+      console.error(`[${context}] Parse error:`, error);
+    }
     throw new Error(`Failed to parse JSON from ${context}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

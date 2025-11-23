@@ -68,6 +68,7 @@ export class Agent {
       userId: this.config.userId,
       conversationId: this.config.conversationId,
       requestId,
+      modelTier: this.config.modelTier,
     };
 
     try {
@@ -498,14 +499,20 @@ ${observations ? `\nInformation gathered:\n${observations}` : ''}`;
 export function createAgent(config: Partial<AgentConfig> & {
   userId: string;
   conversationId: string;
+  modelTier?: 'main' | 'pro';
 }): Agent {
+  // Select model based on tier preference
+  const model = config.modelTier === 'pro'
+    ? GEMINI_MODELS[ModelTier.PRO]
+    : GEMINI_MODELS[ModelTier.MAIN];
+
   const defaultConfig: AgentConfig = {
     maxIterations: 5,
-    model: GEMINI_MODELS[ModelTier.MAIN],
+    model,
     temperature: 0.7,
     tools: Array.from(toolRegistry.values()),
     style: 'balanced',
-    costBudget: 0.10, // $0.10 per request
+    costBudget: config.modelTier === 'pro' ? 0.50 : 0.10, // Higher budget for PRO mode
     ...config,
   };
 

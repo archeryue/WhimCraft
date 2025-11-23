@@ -44,6 +44,7 @@ export interface ToolContext {
   userId: string;
   conversationId: string;
   requestId: string;
+  modelTier?: 'main' | 'pro';  // Model tier for conversation (affects tool model selection)
 }
 
 export interface Tool {
@@ -87,6 +88,7 @@ export interface AgentConfig {
   conversationId: string;
   style: AgentStyle;
   costBudget: number;
+  modelTier?: 'main' | 'pro';  // Model tier for conversation (affects tool model selection)
 }
 
 export interface AgentState {

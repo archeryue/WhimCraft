@@ -17,8 +17,8 @@ npm run lint                   # ESLint checks
 # Testing (see docs/TESTING.md for complete guide)
 npx jest                       # Run all unit tests (145+)
 npx jest --watch              # Watch mode for TDD
-npm run test:e2e              # Run E2E tests (17+)
-npm run test:e2e:ui           # Interactive E2E test UI
+npm run test:e2e:fast         # Run E2E tests (71 tests, ~2 min)
+npx playwright test --ui      # Interactive E2E test UI
 
 # Deployment (see docs/DEPLOYMENT.md for complete guide)
 # NEVER deploy unless user explicitly asks
@@ -107,9 +107,9 @@ Conversation → /save command → AI Title + JSON Blocks → Whim (TipTap Edito
 
 **After Implementation:**
 ```bash
-npm run build      # TypeScript check
-npx jest           # Unit tests (145+)
-npm run test:e2e   # E2E tests (17+)
+npm run build         # TypeScript check
+npx jest              # Unit tests (145+)
+npm run test:e2e:fast # E2E tests (71 tests, 6 suites, ~2 min)
 ```
 - **NEVER** commit until all tests pass (100% pass rate required)
 - **NEVER** skip E2E tests for user-facing features
@@ -220,7 +220,7 @@ src/
     models.ts                     # Model configuration
     feature-flags.ts              # Feature toggles
   __tests__/                      # Jest tests (145+)
-  tests/                          # E2E tests (17+)
+e2e/                              # E2E tests (71 tests, 6 suites)
 ```
 
 ## Documentation
@@ -235,5 +235,5 @@ See `docs/README.md` for comprehensive docs:
 
 ---
 
-**Last Updated**: November 22, 2025
+**Last Updated**: November 23, 2025
 **Maintained By**: Archer & Claude Code

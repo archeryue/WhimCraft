@@ -86,12 +86,13 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 **Complete testing guide**
 
 - **Unit Tests**: 145+ tests with Jest (100% pass rate)
-- **E2E Tests**: 17+ tests with Playwright
-- Test structure and organization
-- Running tests (unit + E2E)
+- **E2E Tests**: 71 tests in 6 organized suites with Playwright
+- Test structure and organization (numbered test suites)
+- Running tests (unit + E2E, ~2 minutes)
 - Mock authentication system (triple-guard security)
 - CI/CD integration
 - Debugging guide
+- Speed optimizations (87% faster after refactoring)
 - **Status**: ✅ Fully automated testing
 
 ### 🔐 [SECURITY_ANALYSIS_TEST_AUTH.md](./SECURITY_ANALYSIS_TEST_AUTH.md)
@@ -159,7 +160,7 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - **File Attachments**: Images and PDFs with multimodal processing
 - **Bilingual Support**: English and Chinese (equal quality)
 - **Progress Tracking**: Real-time visual feedback
-- **Testing**: 145+ unit tests, 17+ E2E tests (100% pass rate)
+- **Testing**: 145+ unit tests, 71 E2E tests in 6 suites (100% pass rate)
 
 ### Tech Stack
 - Next.js 14 (App Router, TypeScript)
@@ -196,6 +197,6 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 
 ---
 
-**Last Updated**: November 22, 2025
-**Test Summary**: 145+ unit tests, 17+ E2E tests (100% pass rate)
+**Last Updated**: November 23, 2025
+**Test Summary**: 145+ unit tests, 71 E2E tests in 6 suites (100% pass rate)
 **Documentation Status**: ✅ Current and maintained

@@ -255,6 +255,7 @@ export async function POST(req: NextRequest) {
               userId: session.user.id,
               conversationId,
               style: 'balanced',
+              modelTier: conversationData?.model_tier || 'main',
             });
 
             // Subscribe to agent events
@@ -400,6 +401,7 @@ export async function POST(req: NextRequest) {
               userId: session.user.id,
               conversationId,
               style: 'balanced',
+              modelTier: conversationData?.model_tier || 'main',
             });
 
             // Subscribe to agent events and stream them as progress

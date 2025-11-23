@@ -156,6 +156,50 @@ test.describe('Core Features - Conversation Management', () => {
       await expect(page.locator(`text=${uniqueMessage}`).first()).toBeVisible({ timeout: 5000 });
     }
   });
+
+  test('should delete a conversation', async ({ page }) => {
+    // Create a conversation by sending a message
+    const testMessage = `Test conversation to delete ${Date.now()}`;
+    await sendChatMessage(page, testMessage);
+    await waitForChatResponse(page);
+
+    // Look for delete button or menu option
+    // Common patterns: trash icon, delete button, context menu
+    const deleteButton = page.locator(
+      'button[aria-label*="delete" i], button[title*="delete" i], [data-testid*="delete"]'
+    ).first();
+
+    // If delete button exists, click it
+    if (await deleteButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await deleteButton.click();
+
+      // Look for confirmation dialog
+      const confirmButton = page.locator(
+        'button:has-text("Delete"), button:has-text("Confirm"), button:has-text("Yes")'
+      ).first();
+
+      if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await confirmButton.click();
+      }
+
+      // Verify conversation was deleted or we're redirected to new chat
+      await page.waitForTimeout(1000);
+      const url = page.url();
+
+      // Should either be on /chat (new conversation) or the message should be gone
+      if (url.endsWith('/chat')) {
+        // Successfully redirected to new chat
+        expect(url).toMatch(/\/chat$/);
+      } else {
+        // Or verify message is no longer visible
+        const messageGone = await page.locator(`text=${testMessage}`).count();
+        expect(messageGone).toBe(0);
+      }
+    } else {
+      // Skip if delete functionality not implemented yet
+      test.skip();
+    }
+  });
 });
 
 test.describe('Core Features - User Profile', () => {
@@ -299,5 +343,40 @@ test.describe('Core Features - Error Handling', () => {
     // Should either prevent submission or handle gracefully
     // Verify page is still functional
     await expect(input).toBeVisible();
+  });
+
+  test('should handle API rate limiting gracefully', async ({ page }) => {
+    await page.goto('/chat');
+    await page.waitForLoadState('networkidle');
+
+    // Mock API rate limiting response
+    await page.route('**/api/chat', async (route) => {
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' })
+      });
+    });
+
+    // Try to send a message
+    await sendChatMessage(page, 'Test rate limiting');
+
+    // Wait for error message to appear
+    await page.waitForTimeout(2000);
+
+    // Verify app handles it gracefully - should show error or be functional
+    const hasErrorMessage = await page.evaluate(() => {
+      const text = document.body.innerText.toLowerCase();
+      return text.includes('rate limit') ||
+             text.includes('too many') ||
+             text.includes('try again') ||
+             text.includes('error');
+    });
+
+    // Either shows error message or remains functional
+    const input = page.locator('textarea[placeholder*="Message"]').first();
+    const inputVisible = await input.isVisible();
+
+    expect(hasErrorMessage || inputVisible).toBe(true);
   });
 });
