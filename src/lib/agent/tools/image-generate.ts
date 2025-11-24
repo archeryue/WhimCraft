@@ -14,14 +14,19 @@ import { promptEnhancer } from '@/lib/image/prompt-enhancer';
 export class ImageGenerateTool extends BaseTool {
   name = 'image_generate';
 
-  description = `Generate images based on text descriptions using AI. Use this when the user
-asks you to create, draw, generate, or visualize images. Returns the generated image
-as base64 data.
+  description = `Generate images based on text descriptions using AI, with optional reference images for image-to-image generation. Use this when the user asks you to create, draw, generate, or visualize images. Returns the generated image as base64 data.
 
 Guidelines:
 - Provide detailed, descriptive prompts for better results
 - Specify style, colors, composition when relevant
-- Note: Cannot generate images of real people or copyrighted characters`;
+- Reference images: If the user has uploaded images, they will be automatically used as reference for image-to-image generation (style transfer, modifications, variations, etc.)
+- Note: Cannot generate images of real people or copyrighted characters
+
+Image-to-Image Use Cases:
+- Style transfer: "Make this photo look like a Van Gogh painting"
+- Variations: "Generate similar versions of this image"
+- Modifications: "Change the background to a sunset"
+- Edits: "Remove the background" or "Add a hat to the person"`;
 
   parameters: ToolParameter[] = [
     {
@@ -51,9 +56,24 @@ Guidelines:
     const aspectRatio = (params.aspectRatio as string) || 'square';
 
     try {
+      // Check if there are reference images from uploaded files
+      const referenceImages = this.context?.files?.filter(
+        (file) => file.type === 'image'
+      );
+      const hasReferenceImages = !!(referenceImages && referenceImages.length > 0);
+
+      if (hasReferenceImages) {
+        console.log(
+          `[ImageGenerateTool] Image-to-image mode: ${referenceImages!.length} reference image(s)`
+        );
+      }
+
       // Step 1: AI-powered prompt enhancement using Gemini Flash Lite
       console.log('[ImageGenerateTool] Enhancing prompt with AI...');
-      const enhancementResult = await promptEnhancer.enhance(prompt);
+      const enhancementResult = await promptEnhancer.enhance(
+        prompt,
+        hasReferenceImages
+      );
 
       let enhancedPrompt = enhancementResult.enhancedPrompt;
 
@@ -61,6 +81,7 @@ Guidelines:
         original: enhancementResult.originalPrompt,
         enhanced: enhancementResult.enhancedPrompt,
         enhancements: enhancementResult.enhancements,
+        hasReferenceImages,
       });
 
       // Step 2: Add style if user specified one
@@ -68,36 +89,43 @@ Guidelines:
         enhancedPrompt = `${enhancedPrompt}, in ${style} style`;
       }
 
-      // Step 3: Add aspect ratio hint
-      switch (aspectRatio) {
-        case 'landscape':
-          enhancedPrompt += ', wide landscape composition';
-          break;
-        case 'portrait':
-          enhancedPrompt += ', vertical portrait composition';
-          break;
-        default:
-          enhancedPrompt += ', square composition';
+      // Step 3: Add aspect ratio hint (only for text-to-image, not for image-to-image)
+      if (!hasReferenceImages) {
+        switch (aspectRatio) {
+          case 'landscape':
+            enhancedPrompt += ', wide landscape composition';
+            break;
+          case 'portrait':
+            enhancedPrompt += ', vertical portrait composition';
+            break;
+          default:
+            enhancedPrompt += ', square composition';
+        }
       }
 
       // Get the IMAGE tier provider (use IMAGE_PRO if conversation is in PRO mode)
-      const modelTier = this.context?.modelTier === 'pro' ? ModelTier.IMAGE_PRO : ModelTier.IMAGE;
+      const modelTier =
+        this.context?.modelTier === 'pro'
+          ? ModelTier.IMAGE_PRO
+          : ModelTier.IMAGE;
       const provider = ProviderFactory.createDefaultProvider(
         GEMINI_MODELS[modelTier]
       );
 
-      // Use generateResponse with image generation system prompt
-      // The Gemini IMAGE model will generate images natively
-      const systemPrompt = `You are an image generation model. Generate an image based on the user's description. Return the image directly.`;
+      // Build system prompt based on mode
+      const systemPrompt = hasReferenceImages
+        ? `You are an image generation model with image-to-image capabilities. The user has provided reference image(s). Generate a new image based on the user's description and the reference image(s). You can perform style transfer, variations, modifications, or edits based on the reference.`
+        : `You are an image generation model. Generate an image based on the user's description. Return the image directly.`;
 
+      // Pass reference images to the provider if available
       const response = await provider.generateResponse(
         [{ role: 'user', content: enhancedPrompt }],
         systemPrompt,
-        0.8
+        0.8,
+        referenceImages
       );
 
-      // For now, return the response content which may contain image data
-      // The actual image handling depends on how Gemini returns images
+      // Return result with metadata
       return successResult(
         {
           generatedContent: response.content,
@@ -105,7 +133,11 @@ Guidelines:
           originalPrompt: prompt,
           style,
           aspectRatio,
-          message: 'Image generation requested. Response may contain image data or description.',
+          hasReferenceImages,
+          referenceImageCount: referenceImages?.length || 0,
+          message: hasReferenceImages
+            ? `Image-to-image generation using ${referenceImages!.length} reference image(s)`
+            : 'Text-to-image generation',
         },
         {
           executionTime: 0,

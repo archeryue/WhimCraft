@@ -14,9 +14,17 @@ describe('ImageGenerateTool', () => {
   let tool: ImageGenerateTool;
   let mockEnhance: jest.MockedFunction<typeof promptEnhancer.enhance>;
   let mockGenerateResponse: jest.Mock;
+  let defaultContext: any;
 
   beforeEach(() => {
     tool = new ImageGenerateTool();
+
+    // Default context for tests
+    defaultContext = {
+      userId: 'test-user',
+      conversationId: 'test-conv',
+      requestId: 'test-req',
+    };
 
     // Mock prompt enhancer
     mockEnhance = promptEnhancer.enhance as jest.MockedFunction<typeof promptEnhancer.enhance>;
@@ -47,10 +55,10 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute
-      const result = await tool.execute({ prompt: 'a cat' });
+      const result = await tool.execute({ prompt: 'a cat' }, defaultContext);
 
       // Verify enhancement was called
-      expect(mockEnhance).toHaveBeenCalledWith('a cat');
+      expect(mockEnhance).toHaveBeenCalledWith('a cat', false);
 
       // Verify enhanced prompt was used for generation
       expect(mockGenerateResponse).toHaveBeenCalledWith(
@@ -61,7 +69,8 @@ describe('ImageGenerateTool', () => {
           }),
         ]),
         expect.any(String),
-        0.8
+        0.8,
+        undefined
       );
 
       // Verify success
@@ -82,10 +91,13 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute with style parameter
-      await tool.execute({
-        prompt: 'a sunset',
-        style: 'watercolor',
-      });
+      await tool.execute(
+        {
+          prompt: 'a sunset',
+          style: 'watercolor',
+        },
+        defaultContext
+      );
 
       // Verify style was appended to enhanced prompt
       expect(mockGenerateResponse).toHaveBeenCalledWith(
@@ -96,7 +108,8 @@ describe('ImageGenerateTool', () => {
           }),
         ]),
         expect.any(String),
-        0.8
+        0.8,
+        undefined
       );
     });
 
@@ -114,10 +127,13 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute with landscape aspect ratio
-      await tool.execute({
-        prompt: 'a landscape',
-        aspectRatio: 'landscape',
-      });
+      await tool.execute(
+        {
+          prompt: 'a landscape',
+          aspectRatio: 'landscape',
+        },
+        defaultContext
+      );
 
       // Verify aspect ratio hint was added
       expect(mockGenerateResponse).toHaveBeenCalledWith(
@@ -128,7 +144,8 @@ describe('ImageGenerateTool', () => {
           }),
         ]),
         expect.any(String),
-        0.8
+        0.8,
+        undefined
       );
     });
 
@@ -146,10 +163,13 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute with portrait aspect ratio
-      await tool.execute({
-        prompt: 'a person',
-        aspectRatio: 'portrait',
-      });
+      await tool.execute(
+        {
+          prompt: 'a person',
+          aspectRatio: 'portrait',
+        },
+        defaultContext
+      );
 
       // Verify portrait composition was added
       expect(mockGenerateResponse).toHaveBeenCalledWith(
@@ -160,7 +180,8 @@ describe('ImageGenerateTool', () => {
           }),
         ]),
         expect.any(String),
-        0.8
+        0.8,
+        undefined
       );
     });
 
@@ -178,9 +199,12 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute without aspect ratio
-      await tool.execute({
-        prompt: 'a circle',
-      });
+      await tool.execute(
+        {
+          prompt: 'a circle',
+        },
+        defaultContext
+      );
 
       // Verify square composition was added
       expect(mockGenerateResponse).toHaveBeenCalledWith(
@@ -191,7 +215,8 @@ describe('ImageGenerateTool', () => {
           }),
         ]),
         expect.any(String),
-        0.8
+        0.8,
+        undefined
       );
     });
   });
@@ -211,7 +236,7 @@ describe('ImageGenerateTool', () => {
       });
 
       // Execute
-      const result = await tool.execute({ prompt: 'a dog' });
+      const result = await tool.execute({ prompt: 'a dog' }, defaultContext);
 
       // Verify it still works
       expect(result.success).toBe(true);
@@ -229,7 +254,7 @@ describe('ImageGenerateTool', () => {
       mockGenerateResponse.mockRejectedValue(new Error('Generation API failed'));
 
       // Execute
-      const result = await tool.execute({ prompt: 'test' });
+      const result = await tool.execute({ prompt: 'test' }, defaultContext);
 
       // Verify error handling
       expect(result.success).toBe(false);
@@ -265,6 +290,267 @@ describe('ImageGenerateTool', () => {
       expect(aspectParam).toBeDefined();
       expect(aspectParam?.required).toBe(false);
       expect(aspectParam?.enum).toEqual(['square', 'landscape', 'portrait']);
+    });
+  });
+
+  describe('Image-to-Image Mode', () => {
+    it('should detect reference images from context', async () => {
+      // Setup context with image files
+      const mockFiles = [
+        {
+          id: 'img1',
+          name: 'photo.jpg',
+          type: 'image',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          data: 'base64data',
+        },
+      ];
+
+      const context = {
+        userId: 'test-user',
+        conversationId: 'test-conv',
+        requestId: 'test-req',
+        files: mockFiles as any,
+      };
+
+      mockEnhance.mockResolvedValue({
+        originalPrompt: 'make it artistic',
+        enhancedPrompt: 'Transform into artistic style with bold colors',
+        enhancements: ['artistic style', 'bold colors'],
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: 'generated image data',
+        usage: { totalTokens: 100 },
+      });
+
+      // Execute
+      const result = await tool.execute({ prompt: 'make it artistic' }, context);
+
+      // Verify enhancement was called with hasReferenceImages = true
+      expect(mockEnhance).toHaveBeenCalledWith('make it artistic', true);
+
+      // Verify reference images were passed to provider
+      expect(mockGenerateResponse).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.stringContaining('image-to-image'),
+        0.8,
+        mockFiles
+      );
+
+      // Verify result contains image-to-image metadata
+      expect(result.success).toBe(true);
+      expect(result.data).toMatchObject({
+        hasReferenceImages: true,
+        referenceImageCount: 1,
+      });
+    });
+
+    it('should filter only image files from context', async () => {
+      // Setup context with mixed file types
+      const mockFiles = [
+        {
+          id: 'img1',
+          name: 'photo.jpg',
+          type: 'image',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          data: 'base64data',
+        },
+        {
+          id: 'pdf1',
+          name: 'document.pdf',
+          type: 'pdf',
+          mimeType: 'application/pdf',
+          size: 2048,
+          data: 'base64data',
+        },
+      ];
+
+      const context = {
+        userId: 'test-user',
+        conversationId: 'test-conv',
+        requestId: 'test-req',
+        files: mockFiles as any,
+      };
+
+      mockEnhance.mockResolvedValue({
+        originalPrompt: 'style transfer',
+        enhancedPrompt: 'Apply style transfer',
+        enhancements: [],
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: 'generated image data',
+        usage: { totalTokens: 100 },
+      });
+
+      // Execute
+      const result = await tool.execute({ prompt: 'style transfer' }, context);
+
+      // Verify only image file was passed (PDF filtered out)
+      expect(mockGenerateResponse).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.any(String),
+        0.8,
+        [mockFiles[0]]
+      );
+
+      // Verify count
+      expect(result.data).toMatchObject({
+        referenceImageCount: 1,
+      });
+    });
+
+    it('should work with multiple reference images', async () => {
+      // Setup context with multiple images
+      const mockFiles = [
+        {
+          id: 'img1',
+          name: 'photo1.jpg',
+          type: 'image',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          data: 'base64data1',
+        },
+        {
+          id: 'img2',
+          name: 'photo2.png',
+          type: 'image',
+          mimeType: 'image/png',
+          size: 2048,
+          data: 'base64data2',
+        },
+      ];
+
+      const context = {
+        userId: 'test-user',
+        conversationId: 'test-conv',
+        requestId: 'test-req',
+        files: mockFiles as any,
+      };
+
+      mockEnhance.mockResolvedValue({
+        originalPrompt: 'combine these',
+        enhancedPrompt: 'Combine these images creatively',
+        enhancements: [],
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: 'generated image data',
+        usage: { totalTokens: 100 },
+      });
+
+      // Execute
+      const result = await tool.execute({ prompt: 'combine these' }, context);
+
+      // Verify both images were passed
+      expect(mockGenerateResponse).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.any(String),
+        0.8,
+        mockFiles
+      );
+
+      expect(result.data).toMatchObject({
+        referenceImageCount: 2,
+      });
+    });
+
+    it('should not add aspect ratio hints in image-to-image mode', async () => {
+      // Setup context with image file
+      const mockFiles = [
+        {
+          id: 'img1',
+          name: 'photo.jpg',
+          type: 'image',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          data: 'base64data',
+        },
+      ];
+
+      const context = {
+        userId: 'test-user',
+        conversationId: 'test-conv',
+        requestId: 'test-req',
+        files: mockFiles as any,
+      };
+
+      mockEnhance.mockResolvedValue({
+        originalPrompt: 'edit this',
+        enhancedPrompt: 'Edit with enhancements',
+        enhancements: [],
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: 'generated image data',
+        usage: { totalTokens: 100 },
+      });
+
+      // Execute with aspect ratio parameter
+      await tool.execute(
+        {
+          prompt: 'edit this',
+          aspectRatio: 'landscape',
+        },
+        context
+      );
+
+      // Verify aspect ratio hint was NOT added (image-to-image mode)
+      expect(mockGenerateResponse).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.not.stringContaining('landscape composition'),
+          }),
+        ]),
+        expect.any(String),
+        0.8,
+        mockFiles
+      );
+    });
+
+    it('should use text-to-image mode when no images in context', async () => {
+      // Setup context without files
+      const context = {
+        userId: 'test-user',
+        conversationId: 'test-conv',
+        requestId: 'test-req',
+        files: undefined,
+      };
+
+      mockEnhance.mockResolvedValue({
+        originalPrompt: 'a dog',
+        enhancedPrompt: 'A fluffy dog',
+        enhancements: [],
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: 'generated image data',
+        usage: { totalTokens: 100 },
+      });
+
+      // Execute
+      const result = await tool.execute({ prompt: 'a dog' }, context);
+
+      // Verify enhancement was called with hasReferenceImages = false
+      expect(mockEnhance).toHaveBeenCalledWith('a dog', false);
+
+      // Verify no files were passed to provider
+      expect(mockGenerateResponse).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.not.stringContaining('image-to-image'),
+        0.8,
+        undefined
+      );
+
+      // Verify result metadata
+      expect(result.data).toMatchObject({
+        hasReferenceImages: false,
+        referenceImageCount: 0,
+      });
     });
   });
 });

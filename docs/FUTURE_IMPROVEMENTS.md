@@ -4,65 +4,58 @@ This document tracks planned enhancements and future features for WhimCraft.
 
 ## High Priority
 
-_(No high priority items at this time)_
+### 1. Web-Fetch Capability Improvements
 
----
+**Description**: Improve web content fetching success rate from ~60% to 85-90% using a hybrid approach with multiple free-tier fallback strategies.
 
-## Medium Priority
+**Current Issues** (from production logs):
+- HTTP 401/403 blocks from news sites (Reuters, Bloomberg, WSJ)
+- No caching (repeated fetches waste money and time)
+- Limited retry intelligence (treats all errors the same)
+- No fallback strategies when sites block automated access
+- Success rate: ~60%
 
-### 1. Image-to-Image Generation
-
-**Description**: Enable users to upload one or more images and use them as reference/basis for generating new images. This includes image editing, style transfer, variations, and modifications.
-
-**Current Behavior**:
-- Image generation only accepts text prompts
-- Users cannot upload reference images
-- No image editing or modification capabilities
-- File upload exists but not connected to image generation
-
-**Proposed Feature**:
+**Proposed Solution**: Hybrid fallback system
 ```
-User uploads image(s) + Text prompt → Image Generation Tool → Modified/New Image
+Direct Fetch (Cheerio) → Alternative Frontends → Archive.org → ScrapingBee → Error with Suggestions
 ```
 
-**Use Cases**:
-1. **Style Transfer**: Upload a photo, ask to make it look like a painting
-2. **Image Editing**: Upload image, ask to change specific elements
-3. **Variations**: Upload image, generate similar variations
-4. **Background Removal/Replacement**: Upload image, modify background
-5. **Object Addition/Removal**: Upload image, add or remove objects
-6. **Image Enhancement**: Upscale, colorize, restore old photos
+**Phase 1: Quick Wins** (4 hours, $0 cost, +15-20% success)
+1. Response caching (1h TTL for dynamic, 24h for static)
+2. Smarter retry logic (different strategies per HTTP status)
+3. Expanded User-Agent pool (10+ diverse UAs)
+4. Better error reporting to agent (suggest alternatives)
 
-**Example Interactions**:
-- "Make this photo look like a Van Gogh painting" + [user photo]
-- "Remove the background from this image" + [product photo]
-- "Change the sunset to a sunrise" + [landscape photo]
-- "Generate 3 variations of this design" + [logo image]
+**Phase 2: Alternative Sources** (4 hours, $0 cost, +25-30% success)
+5. Archive.org Wayback Machine fallback
+6. Alternative frontends (nitter.net for Twitter, old.reddit.com for Reddit)
+7. RSS feed parsing for news sites
+8. ScrapingBee API (1000 free requests/month for JS rendering)
+9. Per-domain rate limiting (avoid IP bans)
+10. Specialized handlers for common sites
 
-**Technical Requirements**:
-1. Extend `image_generate` tool to accept image files as parameter
-2. Pass uploaded images to Gemini IMAGE model via multimodal API
-3. Update prompt enhancer to handle image-based prompts
-4. Ensure base64 images are NOT included in conversation history (already implemented)
-5. Add UI indicator for image-to-image vs text-to-image mode
+**Expected Results**:
+- Success rate: 85-90% (up from ~60%)
+- Cache hit rate: 40-50%
+- Average fetch time: <2s (down from 3-5s)
+- Monthly cost: ~$1-2 (vs $0.80 currently, +$0.20-1.20)
+- All under free tiers of third-party services
 
-**Implementation Plan**:
-1. Add `referenceImages` parameter to image-generate tool
-2. Modify `ToolParameter` type to support file attachments
-3. Update agent to pass files to tools via ToolContext
-4. Enhance prompt builder to include image descriptions
-5. Test with various image formats (PNG, JPEG, WebP)
+**Design Document**: See [WEB_FETCH_IMPROVEMENTS.md](./WEB_FETCH_IMPROVEMENTS.md) for detailed architecture, implementation plan, cost analysis, and testing strategy.
 
-**Files to Modify**:
-- `src/lib/agent/tools/image-generate.ts` - Add image file parameters
-- `src/types/agent.ts` - Extend ToolParameter for file support
-- `src/lib/agent/core/agent.ts` - Pass files to tools
-- `src/lib/image/prompt-enhancer.ts` - Handle image-based prompts
-- `src/components/chat/ChatInput.tsx` - UI for image upload workflow
+**Files to Create/Modify**:
+- NEW: `src/lib/web-search/content-cache.ts`
+- NEW: `src/lib/web-search/alternative-sources.ts`
+- NEW: `src/lib/web-search/domain-limiter.ts`
+- NEW: `src/lib/web-search/site-handlers/`
+- MODIFY: `src/lib/web-search/content-fetcher.ts`
+- MODIFY: `src/lib/agent/tools/web-fetch.ts`
 
-**Estimated Effort**: 4-6 hours
+**Estimated Effort**: 6-8 hours (Phase 1 + 2)
 
-**Cost Impact**: Similar to text-to-image (~$0.000002 per generation)
+**Cost Impact**: +$0-5/month (staying within free tiers)
+
+**Priority Rationale**: HIGH - Production logs show 40% failure rate on important sites (financial news). This directly impacts user experience when agent tries to fetch web content. Solution is cost-effective and uses proven free services.
 
 ---
 
@@ -130,5 +123,35 @@ This is LOW PRIORITY because Phase 1 already provides core functionality. These 
 
 ---
 
-**Last Updated**: November 22, 2025
+**Last Updated**: November 24, 2025
 **Maintained By**: Archer & Claude Code
+
+---
+
+## ✅ Recently Completed
+
+### Image-to-Image Generation (Completed: November 24, 2025)
+
+**Status**: ✅ Implemented and tested
+
+**What was delivered**:
+- Users can now upload images and transform them using AI
+- Supports style transfer, background changes, variations, and edits
+- Automatic detection of uploaded images
+- Dual-mode prompt enhancement (text-to-image vs image-to-image)
+- 17 comprehensive unit tests (all passing)
+
+**Use Cases Enabled**:
+- Style transfer: "Make this look like a Van Gogh painting"
+- Background modification: "Change the background to a sunset"
+- Image variations: "Generate similar versions"
+- Artistic transformations: "Make it watercolor"
+
+**Files Modified**:
+- `src/types/agent.ts` - Added files to ToolContext
+- `src/lib/agent/core/agent.ts` - Pass files to tools
+- `src/lib/agent/tools/image-generate.ts` - Image-to-image logic
+- `src/lib/image/prompt-enhancer.ts` - Dual-mode prompts
+- `src/__tests__/lib/agent/tools/image-generate.test.ts` - Comprehensive tests
+
+**Cost**: Same as text-to-image (~$0.000002 per generation)
