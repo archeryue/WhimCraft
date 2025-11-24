@@ -667,7 +667,25 @@ export function WhimEditor({
 
             {/* Code Block */}
             <button
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              onClick={() => {
+                const { from, to } = editor.state.selection;
+                const selectedText = editor.state.doc.textBetween(from, to, '\n');
+
+                if (selectedText.trim()) {
+                  // Wrap selected text in code block
+                  editor.chain()
+                    .focus()
+                    .deleteSelection()
+                    .insertContent({
+                      type: 'codeBlock',
+                      content: [{ type: 'text', text: selectedText }]
+                    })
+                    .run();
+                } else {
+                  // No selection - toggle code block
+                  editor.chain().focus().toggleCodeBlock().run();
+                }
+              }}
               className={`p-2 rounded-lg hover:bg-slate-100 transition-colors ${
                 editor.isActive('codeBlock') ? 'bg-slate-200' : ''
               }`}
@@ -808,10 +826,22 @@ export function WhimEditor({
             {/* Insert Math (inline) */}
             <button
               onClick={() => {
-                const formula = window.prompt('Enter LaTeX formula (e.g., E = mc^2):');
-                if (formula) {
-                  // Use the correct Mathematics extension command
-                  editor.commands.insertInlineMath({ latex: formula });
+                const { from, to } = editor.state.selection;
+                const selectedText = editor.state.doc.textBetween(from, to, '\n');
+
+                if (selectedText.trim()) {
+                  // Wrap selected text in inline math
+                  editor.chain()
+                    .focus()
+                    .deleteSelection()
+                    .insertInlineMath({ latex: selectedText.trim() })
+                    .run();
+                } else {
+                  // No selection - prompt for formula
+                  const formula = window.prompt('Enter LaTeX formula (e.g., E = mc^2):');
+                  if (formula) {
+                    editor.commands.insertInlineMath({ latex: formula });
+                  }
                 }
               }}
               className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
@@ -830,10 +860,22 @@ export function WhimEditor({
             {/* Insert Math (display/block) */}
             <button
               onClick={() => {
-                const formula = window.prompt('Enter LaTeX formula for display mode (e.g., \\int_0^\\infty e^{-x^2} dx):');
-                if (formula) {
-                  // Use block math for display equations
-                  editor.commands.insertBlockMath({ latex: formula });
+                const { from, to } = editor.state.selection;
+                const selectedText = editor.state.doc.textBetween(from, to, '\n');
+
+                if (selectedText.trim()) {
+                  // Wrap selected text in display math
+                  editor.chain()
+                    .focus()
+                    .deleteSelection()
+                    .insertBlockMath({ latex: selectedText.trim() })
+                    .run();
+                } else {
+                  // No selection - prompt for formula
+                  const formula = window.prompt('Enter LaTeX formula for display mode (e.g., \\int_0^\\infty e^{-x^2} dx):');
+                  if (formula) {
+                    editor.commands.insertBlockMath({ latex: formula });
+                  }
                 }
               }}
               className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
