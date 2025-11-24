@@ -43,15 +43,15 @@ A bilingual (English/Chinese) AI agent with advanced memory, personalization, an
 
 ### Step 1: Install Dependencies
 
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 ### Step 2: Setup Environment Variables
 
-Create a \`.env.local\` file in the root directory:
+Create a `.env.local` file in the root directory:
 
-\`\`\`env
+```env
 # Next.js
 NEXTAUTH_URL=http://localhost:8080
 NEXTAUTH_SECRET=your-secret-key-here
@@ -79,7 +79,7 @@ ADMIN_EMAIL=archeryue7@gmail.com
 NEXT_PUBLIC_USE_INTELLIGENT_ANALYSIS=true
 NEXT_PUBLIC_USE_WEB_SEARCH=true
 NEXT_PUBLIC_USE_AGENTIC_MODE=true
-\`\`\`
+```
 
 ### Step 3: Get API Keys and Credentials
 
@@ -87,7 +87,7 @@ NEXT_PUBLIC_USE_AGENTIC_MODE=true
 1. Go to [https://ai.google.dev/](https://ai.google.dev/)
 2. Click "Get API Key"
 3. Create a new API key
-4. Copy the key to \`GEMINI_API_KEY\` in \`.env.local\`
+4. Copy the key to `GEMINI_API_KEY` in `.env.local`
 
 #### 2. Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/)
@@ -96,24 +96,24 @@ NEXT_PUBLIC_USE_AGENTIC_MODE=true
 4. Go to Project Settings → Service Accounts
 5. Click "Generate new private key"
 6. Download the JSON file
-7. Copy values to \`.env.local\`:
-   - \`project_id\` → \`FIREBASE_PROJECT_ID\`
-   - \`private_key\` → \`FIREBASE_PRIVATE_KEY\`
-   - \`client_email\` → \`FIREBASE_CLIENT_EMAIL\`
+7. Copy values to `.env.local`:
+   - `project_id` → `FIREBASE_PROJECT_ID`
+   - `private_key` → `FIREBASE_PRIVATE_KEY`
+   - `client_email` → `FIREBASE_CLIENT_EMAIL`
 
 #### 3. Google OAuth Credentials
 1. Go to [GCP Console](https://console.cloud.google.com/)
 2. Navigate to APIs & Services → Credentials
 3. Click "Create Credentials" → "OAuth 2.0 Client ID"
 4. Application type: Web application
-5. Add authorized redirect URI: \`http://localhost:8080/api/auth/callback/google\`
-6. Copy Client ID and Client Secret to \`.env.local\`
+5. Add authorized redirect URI: `http://localhost:8080/api/auth/callback/google`
+6. Copy Client ID and Client Secret to `.env.local`
 
 ### Step 4: Run Development Server
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 Open [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -341,7 +341,7 @@ For complete deployment instructions to Google Cloud Run, see [docs/DEPLOYMENT.m
 ### "Unauthorized" error when testing
 - Make sure all environment variables are set correctly
 - Check that Firebase credentials are valid
-- Verify that your email is set as \`ADMIN_EMAIL\`
+- Verify that your email is set as `ADMIN_EMAIL`
 
 ### Firestore permission denied
 - Make sure you're using Firebase Admin SDK (not client SDK)
