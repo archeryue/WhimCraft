@@ -21,7 +21,7 @@ import { ProgressStep, ProgressEvent } from "@/lib/progress/types";
 import { SearchResult } from "@/types/web-search";
 import { PromptAnalysisResult } from "@/types/prompt-analysis";
 import { MemoryFact } from "@/types/memory";
-import { convertConversationToWhimBlocks } from "@/lib/whim/converter";
+import { convertConversationToWhimBlocks, convertConversationToArticleBlocks } from "@/lib/whim/converter";
 import { Timestamp } from 'firebase-admin/firestore';
 import { Whim } from "@/types/whim";
 import { promptEnhancer } from "@/lib/image/prompt-enhancer";
@@ -148,14 +148,17 @@ export async function POST(req: NextRequest) {
     // Check for slash commands (/save or /whim)
     const trimmedMessage = message.trim().toLowerCase();
     if (trimmedMessage === '/save' || trimmedMessage === '/whim') {
-      console.log('[Chat API] Slash command detected, converting conversation to whim');
+      const isArticleMode = trimmedMessage === '/whim';
+      console.log(`[Chat API] Slash command detected: ${trimmedMessage}, article mode: ${isArticleMode}`);
 
-      // Exclude the /save command itself from the whim
+      // Exclude the command itself from the whim
       // Filter out the last message (which is the /save or /whim command)
       const messagesWithoutCommand = messages.slice(0, -1);
 
-      // Convert conversation to whim (using new JSON blocks format)
-      const { title, blocks } = await convertConversationToWhimBlocks(messagesWithoutCommand);
+      // Convert conversation based on command type
+      const { title, blocks } = isArticleMode
+        ? await convertConversationToArticleBlocks(messagesWithoutCommand)  // AI-generated article
+        : await convertConversationToWhimBlocks(messagesWithoutCommand);     // Chat format
 
       // Save whim to database (only blocks, no content field for new whims)
       const now = Timestamp.now();
@@ -171,22 +174,26 @@ export async function POST(req: NextRequest) {
       const whimRef = await db.collection('whims').add(whimData);
       const whimId = whimRef.id;
 
-      console.log('[Chat API] Whim created:', whimId);
+      console.log(`[Chat API] Whim created (${isArticleMode ? 'article' : 'chat'} format):`, whimId);
 
       // Return success message as a stream
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          const successMessage = `✅ Whim saved successfully!\n\n**${title}**\n\nYou can view and edit this whim in the [Whims page](/whim).`;
+          const formatNote = isArticleMode
+            ? ' (AI-generated article format)'
+            : ' (chat format)';
+          const successMessage = `✅ Whim saved successfully!${formatNote}\n\n**${title}**\n\nYou can view and edit this whim in the [Whims page](/whim).`;
           controller.enqueue(encoder.encode(`[CONTENT]${JSON.stringify(successMessage)}\n`));
           controller.close();
         },
       });
 
       // Save AI response to conversation
+      const formatNote = isArticleMode ? ' (AI-generated article)' : '';
       await conversationRef.collection(COLLECTIONS.MESSAGES).add({
         role: "assistant",
-        content: `✅ Whim saved successfully!\n\n**${title}**\n\nYou can view and edit this whim in the Whims page.`,
+        content: `✅ Whim saved successfully!${formatNote}\n\n**${title}**\n\nYou can view and edit this whim in the Whims page.`,
         created_at: new Date(),
       });
 
