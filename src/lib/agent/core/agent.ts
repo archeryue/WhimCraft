@@ -69,6 +69,7 @@ export class Agent {
       conversationId: this.config.conversationId,
       requestId,
       modelTier: this.config.modelTier,
+      files: input.files,  // Pass uploaded files to tools
     };
 
     try {

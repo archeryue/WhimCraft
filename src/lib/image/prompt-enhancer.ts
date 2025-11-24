@@ -16,7 +16,7 @@ export interface PromptEnhancementResult {
   enhancements: string[];  // List of what was added
 }
 
-const ENHANCEMENT_SYSTEM_PROMPT = `You are an expert image generation prompt engineer. Your job is to take a user's brief image description and enhance it into a detailed, high-quality prompt for image generation models.
+const ENHANCEMENT_SYSTEM_PROMPT_TEXT_TO_IMAGE = `You are an expert image generation prompt engineer. Your job is to take a user's brief image description and enhance it into a detailed, high-quality prompt for image generation models.
 
 **Your Task:**
 1. Analyze the user's input to understand their intent
@@ -58,6 +58,59 @@ Output:
   ]
 }`;
 
+const ENHANCEMENT_SYSTEM_PROMPT_IMAGE_TO_IMAGE = `You are an expert image-to-image prompt engineer. The user has provided reference image(s) and wants to transform or modify them. Your job is to take their brief instruction and enhance it into a clear, actionable prompt.
+
+**Your Task:**
+1. Analyze the user's instruction to understand what transformation they want
+2. Enhance it with specific guidance about:
+   - What to preserve from the reference image
+   - What to change or transform
+   - Style transfer instructions (if applicable)
+   - Specific modifications or edits
+   - Quality markers for the transformation
+
+**Guidelines for Image-to-Image:**
+- Focus on transformation instructions rather than generating from scratch
+- Be clear about what elements to keep vs. change
+- For style transfer: specify the target style clearly
+- For modifications: be specific about what to add/remove/change
+- For variations: specify how to vary while maintaining essence
+- Keep instructions concise and actionable
+
+**Output Format:**
+Return ONLY a JSON object with this exact structure:
+{
+  "enhancedPrompt": "The detailed transformation instructions here",
+  "enhancements": ["Enhancement 1", "Enhancement 2", ...]
+}
+
+**Examples:**
+Input: "make it look like a Van Gogh painting"
+Output:
+{
+  "enhancedPrompt": "Transform this image into Van Gogh's post-impressionist style with bold, swirling brushstrokes, vibrant colors, and expressive texture. Maintain the composition and main subject while applying Van Gogh's characteristic thick impasto technique and emotional color palette",
+  "enhancements": [
+    "Specified post-impressionist style",
+    "Added brushstroke details (swirling, bold)",
+    "Emphasized color vibrancy",
+    "Noted impasto technique",
+    "Specified to maintain composition"
+  ]
+}
+
+Input: "change the background to a sunset"
+Output:
+{
+  "enhancedPrompt": "Keep the main subject exactly as is, but replace the background with a dramatic sunset scene featuring warm orange and pink hues, soft golden hour lighting, and subtle clouds. Ensure proper lighting adjustment on the subject to match the sunset ambiance",
+  "enhancements": [
+    "Specified to preserve main subject",
+    "Added sunset color details (orange, pink)",
+    "Mentioned golden hour lighting",
+    "Added atmospheric details (clouds)",
+    "Noted lighting consistency requirement"
+  ]
+}`;
+
 class PromptEnhancer {
   private genAI: GoogleGenerativeAI | null = null;
 
@@ -76,9 +129,13 @@ class PromptEnhancer {
    * Enhance an image generation prompt
    *
    * @param userPrompt - The user's original prompt
+   * @param hasReferenceImages - Whether reference images are provided (for image-to-image)
    * @returns Enhanced prompt with details
    */
-  async enhance(userPrompt: string): Promise<PromptEnhancementResult> {
+  async enhance(
+    userPrompt: string,
+    hasReferenceImages: boolean = false
+  ): Promise<PromptEnhancementResult> {
     try {
       // Use Flash Lite for cost efficiency (~50 tokens * $0.00004/1K = $0.000002)
       const genAI = this.getGenAI();
@@ -86,21 +143,33 @@ class PromptEnhancer {
         model: GEMINI_MODELS[ModelTier.LITE],
       });
 
-      const prompt = `User's image request: "${userPrompt}"
+      // Choose system prompt based on mode
+      const systemPrompt = hasReferenceImages
+        ? ENHANCEMENT_SYSTEM_PROMPT_IMAGE_TO_IMAGE
+        : ENHANCEMENT_SYSTEM_PROMPT_TEXT_TO_IMAGE;
 
-Enhance this into a detailed image generation prompt following the guidelines above.`;
+      const promptType = hasReferenceImages
+        ? 'image transformation instruction'
+        : 'image request';
+      const prompt = `User's ${promptType}: "${userPrompt}"
 
-      console.log(`[PromptEnhancer] Enhancing prompt: "${userPrompt}"`);
+Enhance this into a detailed ${hasReferenceImages ? 'transformation' : 'image generation'} prompt following the guidelines above.`;
+
+      console.log(
+        `[PromptEnhancer] Enhancing ${hasReferenceImages ? 'image-to-image' : 'text-to-image'} prompt: "${userPrompt}"`
+      );
 
       const result = await model.generateContent({
-        contents: [{
-          role: "user",
-          parts: [{ text: prompt }],
-        }],
-        systemInstruction: ENHANCEMENT_SYSTEM_PROMPT,
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
+        systemInstruction: systemPrompt,
         generationConfig: {
-          temperature: 0.7,  // Some creativity, but not too wild
-          maxOutputTokens: 300,  // Keep it concise
+          temperature: 0.7, // Some creativity, but not too wild
+          maxOutputTokens: 300, // Keep it concise
         },
       });
 

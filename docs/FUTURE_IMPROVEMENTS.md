@@ -59,64 +59,6 @@ Direct Fetch (Cheerio) → Alternative Frontends → Archive.org → ScrapingBee
 
 ---
 
-## Medium Priority
-
-### 1. Image-to-Image Generation
-
-**Description**: Enable users to upload one or more images and use them as reference/basis for generating new images. This includes image editing, style transfer, variations, and modifications.
-
-**Current Behavior**:
-- Image generation only accepts text prompts
-- Users cannot upload reference images
-- No image editing or modification capabilities
-- File upload exists but not connected to image generation
-
-**Proposed Feature**:
-```
-User uploads image(s) + Text prompt → Image Generation Tool → Modified/New Image
-```
-
-**Use Cases**:
-1. **Style Transfer**: Upload a photo, ask to make it look like a painting
-2. **Image Editing**: Upload image, ask to change specific elements
-3. **Variations**: Upload image, generate similar variations
-4. **Background Removal/Replacement**: Upload image, modify background
-5. **Object Addition/Removal**: Upload image, add or remove objects
-6. **Image Enhancement**: Upscale, colorize, restore old photos
-
-**Example Interactions**:
-- "Make this photo look like a Van Gogh painting" + [user photo]
-- "Remove the background from this image" + [product photo]
-- "Change the sunset to a sunrise" + [landscape photo]
-- "Generate 3 variations of this design" + [logo image]
-
-**Technical Requirements**:
-1. Extend `image_generate` tool to accept image files as parameter
-2. Pass uploaded images to Gemini IMAGE model via multimodal API
-3. Update prompt enhancer to handle image-based prompts
-4. Ensure base64 images are NOT included in conversation history (already implemented)
-5. Add UI indicator for image-to-image vs text-to-image mode
-
-**Implementation Plan**:
-1. Add `referenceImages` parameter to image-generate tool
-2. Modify `ToolParameter` type to support file attachments
-3. Update agent to pass files to tools via ToolContext
-4. Enhance prompt builder to include image descriptions
-5. Test with various image formats (PNG, JPEG, WebP)
-
-**Files to Modify**:
-- `src/lib/agent/tools/image-generate.ts` - Add image file parameters
-- `src/types/agent.ts` - Extend ToolParameter for file support
-- `src/lib/agent/core/agent.ts` - Pass files to tools
-- `src/lib/image/prompt-enhancer.ts` - Handle image-based prompts
-- `src/components/chat/ChatInput.tsx` - UI for image upload workflow
-
-**Estimated Effort**: 4-6 hours
-
-**Cost Impact**: Similar to text-to-image (~$0.000002 per generation)
-
----
-
 ## Low Priority
 
 ### 1. Notion-like Whim Editing Experience - Phase 2 Enhancements
@@ -181,5 +123,35 @@ This is LOW PRIORITY because Phase 1 already provides core functionality. These 
 
 ---
 
-**Last Updated**: November 23, 2025
+**Last Updated**: November 24, 2025
 **Maintained By**: Archer & Claude Code
+
+---
+
+## ✅ Recently Completed
+
+### Image-to-Image Generation (Completed: November 24, 2025)
+
+**Status**: ✅ Implemented and tested
+
+**What was delivered**:
+- Users can now upload images and transform them using AI
+- Supports style transfer, background changes, variations, and edits
+- Automatic detection of uploaded images
+- Dual-mode prompt enhancement (text-to-image vs image-to-image)
+- 17 comprehensive unit tests (all passing)
+
+**Use Cases Enabled**:
+- Style transfer: "Make this look like a Van Gogh painting"
+- Background modification: "Change the background to a sunset"
+- Image variations: "Generate similar versions"
+- Artistic transformations: "Make it watercolor"
+
+**Files Modified**:
+- `src/types/agent.ts` - Added files to ToolContext
+- `src/lib/agent/core/agent.ts` - Pass files to tools
+- `src/lib/agent/tools/image-generate.ts` - Image-to-image logic
+- `src/lib/image/prompt-enhancer.ts` - Dual-mode prompts
+- `src/__tests__/lib/agent/tools/image-generate.test.ts` - Comprehensive tests
+
+**Cost**: Same as text-to-image (~$0.000002 per generation)

@@ -45,6 +45,7 @@ export interface ToolContext {
   conversationId: string;
   requestId: string;
   modelTier?: 'main' | 'pro';  // Model tier for conversation (affects tool model selection)
+  files?: FileAttachment[];  // Uploaded files available to tools (e.g., for image-to-image generation)
 }
 
 export interface Tool {
