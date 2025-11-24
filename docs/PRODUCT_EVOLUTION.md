@@ -457,18 +457,21 @@ Agent RESPOND: "Tesla is at $245.67. I've saved it to your watchlist."
 4. Write E2E tests (Playwright)
 5. **Only commit when all tests pass (100% pass rate)**
 
-### PRO Mode with Gemini 2.0 Models
+### PRO Mode with Gemini 3.0 Models
 **Commit**: `2a44539` - *feat: Add PRO mode with Gemini 3.0 models*
 
-**Product Tiering**: Free tier (Flash) + PRO tier (advanced models).
+**Product Tiering**: Free tier (Flash 2.5) + PRO tier (advanced 3.0 models).
 
 **PRO Features**:
-- Gemini 2.0 Flash Pro (higher quality reasoning)
-- Gemini 2.0 Flash Thinking Exp (extended reasoning with thoughts)
+- Gemini 3.0 Pro Preview (higher quality reasoning)
+- Gemini 3.0 Pro Image Preview (high-quality image generation)
 - `/pro` command to enable
+- Advanced reasoning with extended context
 - Thinking process visibility in UI
 
 **Pricing Strategy**: Still within family budget ($8-18/month).
+
+**Pricing**: $2.00/M input, $12.00/M output (vs $0.30/$2.50 for Flash 2.5)
 
 **Use Case**: Complex reasoning tasks, creative writing, deep analysis.
 
