@@ -11,6 +11,9 @@ export interface PageContent {
     fetchedAt: Date;
     fetchDuration: number; // milliseconds
     contentLength: number; // bytes
+    source?: 'direct' | 'jina.ai' | 'archive.org'; // Track which fetcher succeeded
+    archiveDate?: Date; // Only for archive.org
+    archiveAgeInDays?: number; // Only for archive.org
     error?: string;
   };
 }

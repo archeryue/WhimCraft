@@ -1,17 +1,25 @@
 /**
  * Content Fetcher Service
- * Fetches and parses web page content using cheerio
+ * Fetches and parses web page content using cheerio with intelligent fallbacks
+ * Fallback chain: Cache → Direct → Jina.ai → Archive.org
  */
 
 import * as cheerio from 'cheerio';
 import { PageContent, ContentFetcherOptions, ContentFetchError } from '@/types/content-fetching';
+import { contentCache } from './content-cache';
+import { jinaFetcher } from './jina-fetcher';
+import { archiveFetcher } from './archive-fetcher';
 
-// Realistic User-Agent strings that rotate to avoid blocking
+// Expanded User-Agent pool (harder to fingerprint)
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile Safari/604.1',
+  'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
 ];
 
 const DEFAULT_OPTIONS: ContentFetcherOptions = {
@@ -46,9 +54,52 @@ export class ContentFetcher {
   }
 
   /**
-   * Fetch and parse content from a URL with retry logic
+   * Main entry point: Try cache → direct → Jina.ai → Archive.org
    */
   async fetchPageContent(url: string): Promise<PageContent> {
+    // 1. Check cache first
+    const cached = contentCache.get(url);
+    if (cached) {
+      return cached;
+    }
+
+    // 2. Try direct fetch
+    try {
+      const content = await this.directFetch(url);
+      contentCache.set(url, content);
+      return content;
+    } catch (directError) {
+      const errorMsg = directError instanceof Error ? directError.message : '';
+      console.log(`[ContentFetcher] Direct fetch failed: ${errorMsg}`);
+
+      // 3. Try Jina.ai (handles JS + bot detection)
+      try {
+        console.log('[ContentFetcher] Trying Jina.ai fallback...');
+        const jinaContent = await jinaFetcher.fetch(url);
+        contentCache.set(url, jinaContent);
+        return jinaContent;
+      } catch (jinaError) {
+        console.log(`[ContentFetcher] Jina.ai failed: ${jinaError}`);
+
+        // 4. Try Archive.org (final fallback)
+        try {
+          console.log('[ContentFetcher] Trying Archive.org fallback...');
+          const archiveContent = await archiveFetcher.fetch(url);
+          contentCache.set(url, archiveContent, 7200000); // Cache 2 hours
+          return archiveContent;
+        } catch (archiveError) {
+          console.error(`[ContentFetcher] All methods failed for ${url}`);
+          // Throw original error for best error message
+          throw directError;
+        }
+      }
+    }
+  }
+
+  /**
+   * Direct fetch using Cheerio (current system, improved)
+   */
+  private async directFetch(url: string): Promise<PageContent> {
     const maxRetries = 2;
     let lastError: Error | null = null;
 
@@ -59,70 +110,55 @@ export class ContentFetcher {
         if (attempt > 0) {
           // Exponential backoff: 1s, 2s
           const delay = 1000 * Math.pow(2, attempt - 1);
-          console.log(`[ContentFetcher] Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay for ${url}`);
+          console.log(`[ContentFetcher] Retry ${attempt}/${maxRetries} after ${delay}ms`);
           await this.sleep(delay);
         }
 
-        console.log(`[ContentFetcher] Fetching: ${url}`);
+        console.log(`[ContentFetcher] Direct fetching: ${url}`);
 
-        // 1. Fetch HTML with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.options.timeout);
-
-        // Use random User-Agent on retry to bypass blocking
+        // Use random User-Agent on retries
         const userAgent = attempt > 0 ? this.getRandomUserAgent() : this.options.userAgent;
 
         const response = await fetch(url, {
-          signal: controller.signal,
+          signal: AbortSignal.timeout(this.options.timeout),
           headers: {
             'User-Agent': userAgent,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
             'Cache-Control': 'no-cache',
             'Referer': new URL(url).origin,
           },
         });
 
-        clearTimeout(timeoutId);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+        // Check Content-Type
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('application/pdf') ||
+            contentType.includes('application/octet-stream') ||
+            contentType.includes('application/zip')) {
+          throw new Error(`Unsupported content type: ${contentType}`);
+        }
 
-      // Check Content-Type - skip PDFs and other binary files
-      const contentType = response.headers.get('Content-Type') || '';
-      if (contentType.includes('application/pdf') ||
-          contentType.includes('application/octet-stream') ||
-          contentType.includes('application/zip')) {
-        throw new Error(`Unsupported content type: ${contentType}`);
-      }
+        // Check Content-Length
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > MAX_DOWNLOAD_SIZE) {
+          throw new Error(`File too large: ${contentLength} bytes`);
+        }
 
-      // Check Content-Length - skip if file is too large
-      const contentLength = response.headers.get('Content-Length');
-      if (contentLength && parseInt(contentLength) > MAX_DOWNLOAD_SIZE) {
-        throw new Error(`File too large: ${contentLength} bytes (max ${MAX_DOWNLOAD_SIZE})`);
-      }
+        const html = await response.text();
+        const fetchDuration = Date.now() - startTime;
 
-      const html = await response.text();
-      const fetchDuration = Date.now() - startTime;
+        // Parse with cheerio
+        const $ = cheerio.load(html);
+        const title = this.extractTitle($);
+        const mainContent = this.extractMainContent($);
+        const cleanedText = this.cleanText(mainContent);
+        const truncatedText = cleanedText.substring(0, this.options.maxContentLength);
 
-      console.log(`[ContentFetcher] Fetched ${url} in ${fetchDuration}ms (${html.length} bytes)`);
-
-      // 2. Parse with cheerio
-      const $ = cheerio.load(html);
-
-      // 3. Extract title
-      const title = this.extractTitle($);
-
-      // 4. Extract main content
-      const mainContent = this.extractMainContent($);
-
-      // 5. Clean and truncate
-      const cleanedText = this.cleanText(mainContent);
-      const truncatedText = cleanedText.substring(0, this.options.maxContentLength);
-
-      console.log(`[ContentFetcher] Extracted ${truncatedText.length} chars from ${url}`);
+        console.log(`[ContentFetcher] Direct success in ${fetchDuration}ms (${truncatedText.length} chars)`);
 
         return {
           url,
@@ -131,40 +167,32 @@ export class ContentFetcher {
           cleanedText: truncatedText,
           metadata: {
             fetchedAt: new Date(),
-            fetchDuration: Date.now() - startTime,
+            fetchDuration,
             contentLength: truncatedText.length,
+            source: 'direct',
           },
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         const errorMessage = lastError.message;
 
-        // Don't retry for non-retryable errors
+        // Don't retry non-retryable errors
         if (errorMessage.includes('Unsupported content type') ||
-            errorMessage.includes('File too large')) {
-          console.error(`[ContentFetcher] Non-retryable error for ${url}:`, errorMessage);
+            errorMessage.includes('File too large') ||
+            errorMessage.includes('404') ||
+            errorMessage.includes('410')) {
+          console.error(`[ContentFetcher] Non-retryable error: ${errorMessage}`);
           break;
         }
 
-        // Retry for HTTP errors (403, 429, 500+) and network errors
+        // Continue retrying for other errors
         if (attempt < maxRetries) {
-          console.warn(`[ContentFetcher] Fetch failed (attempt ${attempt + 1}/${maxRetries + 1}):`, errorMessage);
           continue;
         }
-
-        // Max retries exhausted
-        console.error(`[ContentFetcher] Failed to fetch ${url} after ${maxRetries + 1} attempts:`, errorMessage);
       }
     }
 
-    // All attempts failed, throw error
-    const fetchError: ContentFetchError = {
-      url,
-      error: lastError?.message || 'Failed to fetch after retries',
-      errorType: this.categorizeError(lastError),
-    };
-
-    throw fetchError;
+    throw lastError || new Error('Failed to fetch');
   }
 
   /**
