@@ -4,19 +4,25 @@ A chronological journey through the key architectural, product, and development 
 
 ---
 
-## Timeline Overview
+## 📅 Timeline Overview
 
-**October 29, 2025** - Foundation
-**October 30, 2025** - Intelligence Layer
-**November 1-2, 2025** - Context Engineering
-**November 3, 2025** - Production Hardening
-**November 5-6, 2025** - Iterative Intelligence
-**November 11, 2025** - Rich Content
-**November 16-17, 2025** - Rebranding & Agentic Architecture
-**November 20-21, 2025** - Whim Content System
-**November 22, 2025** - PRO Mode & Testing
-**November 23, 2025** - Streaming Resilience
-**November 24, 2025** - Web Fetch Resilience
+**27-Day Journey: From Chatbot to AI Agent Platform**
+
+| Phase | Date | Milestone | Key Achievement |
+|-------|------|-----------|-----------------|
+| 🏗️ **1** | **Oct 29** | **Foundation** | ArcherChat born - Next.js + Gemini + OAuth |
+| 🧠 **2** | **Oct 30** | **Intelligence Layer** | Bilingual support + Memory system + Image gen |
+| 🔧 **3** | **Nov 1-2** | **Context Engineering** | Web search + Intelligent analysis + Content extraction |
+| 🛡️ **4** | **Nov 3** | **Production Hardening** | CI/CD pipeline + 5 automated security checks |
+| 🔄 **5** | **Nov 5-6** | **Iterative Intelligence** | Multi-iteration search with AI reflection |
+| 🎨 **6** | **Nov 11** | **Rich Content** | LaTeX math rendering support |
+| 🤖 **7** | **Nov 16-17** | **Rebranding & Agentic** | WhimCraft + ReAct agent pattern |
+| 📝 **8** | **Nov 20-21** | **Whim Content System** | Markdown → TipTap blocks (Notion-like) |
+| 🚀 **9** | **Nov 22** | **PRO Mode & Testing** | Gemini 3.0 models + 363 automated tests |
+| 📡 **10** | **Nov 23** | **Streaming Resilience** | Auto-resume + Image-to-image generation |
+| 🌐 **11** | **Nov 24** | **Web Fetch Resilience** | 90-95% success with zero-cost fallback |
+
+**Key Metrics**: 5x codebase growth • 363 tests • 23 features • $0 cost increase
 
 ---
 
