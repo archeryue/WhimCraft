@@ -6,6 +6,17 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 
 ## 📚 Core Documentation
 
+### 📖 [PRODUCT_EVOLUTION.md](./PRODUCT_EVOLUTION.md)
+**27-day journey from chatbot to AI agent platform**
+
+- 11 major phases of evolution (Oct 29 - Nov 24, 2025)
+- Key architectural transformations
+- Product turning points
+- Development model evolution
+- Metrics: 5x codebase growth, 363 tests, 23 features
+- Strategic decisions and lessons learned
+- **Essential reading** for understanding WhimCraft's design philosophy
+
 ### 🎯 [DESIGN.md](./DESIGN.md)
 **Complete system architecture and design**
 
@@ -14,7 +25,7 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - Provider abstraction layer
 - Database schema (Firestore)
 - API design
-- Cost estimation (~$8-18/month)
+- Cost estimation (~$7.50-17.50/month)
 - Security considerations
 
 ### 🤖 [AGENTIC_ARCHITECTURE.md](./AGENTIC_ARCHITECTURE.md)
@@ -57,15 +68,16 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - **Status**: ✅ Implemented
 
 ### 🌐 [WEB_FETCH_IMPROVEMENTS.md](./WEB_FETCH_IMPROVEMENTS.md)
-**Web content fetching improvements (Planned)**
+**Web content fetching with zero-cost fallback chain**
 
-- Hybrid fallback system with free-tier services
-- Response caching (1h-24h TTL)
-- Alternative sources (Archive.org, Nitter, RSS)
-- Smarter retry logic per HTTP status code
-- Expected success rate: 85-90% (up from ~60%)
-- Cost: +$0-5/month (free tiers)
-- **Status**: 📋 Design Complete, Ready for Implementation
+- Multi-tier fallback: Cache → Direct → Jina.ai → Archive.org
+- In-memory LRU cache (500 entries, 1h TTL)
+- JavaScript rendering + bot bypass (Jina.ai Reader)
+- Historical content fallback (Archive.org)
+- Success rate: 90-95% (up from ~60%)
+- Cost impact: **-$0.15/month** (saves money via caching!)
+- 21 unit tests + 25 E2E tests
+- **Status**: ✅ Implemented and deployed
 
 ### 📊 [PROGRESS_TRACKING.md](./PROGRESS_TRACKING.md)
 **Real-time progress feedback**
@@ -96,8 +108,8 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 ### 🧪 [TESTING.md](./TESTING.md)
 **Complete testing guide**
 
-- **Unit Tests**: 145+ tests with Jest (100% pass rate)
-- **E2E Tests**: 71 tests in 6 organized suites with Playwright
+- **Unit Tests**: 290 tests with Jest (100% pass rate)
+- **E2E Tests**: 73 tests in 8 files with Playwright
 - Test structure and organization (numbered test suites)
 - Running tests (unit + E2E, ~2 minutes)
 - Mock authentication system (triple-guard security)
@@ -139,25 +151,27 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - Effort estimates
 
 ### 🔄 [STREAM_RESILIENCE_DESIGN.md](./STREAM_RESILIENCE_DESIGN.md)
-**Stream buffering + resume design (Planned)**
+**Stream buffering with auto-resume**
 
 - Server-side buffer manager
-- Client-side resume logic
-- Edge cases & error handling
-- Complete implementation plan
-- **Status**: 📋 Planned (Low Priority)
+- Client-side auto-reconnect
+- Resume from last position
+- Maximum 3 retry attempts
+- 95% reduction in incomplete responses
+- **Status**: ✅ Implemented
 
 ---
 
 ## 🎯 Quick Start
 
 1. **New to WhimCraft?** → [../README.md](../README.md) for local setup
-2. **Understanding architecture?** → [DESIGN.md](./DESIGN.md)
-3. **How does agentic mode work?** → [AGENTIC_ARCHITECTURE.md](./AGENTIC_ARCHITECTURE.md)
-4. **Ready to deploy?** → [DEPLOYMENT.md](./DEPLOYMENT.md)
-5. **Need to test?** → [TESTING.md](./TESTING.md)
-6. **Understanding memory?** → [MEMORY_SYSTEM_COMPLETE.md](./MEMORY_SYSTEM_COMPLETE.md)
-7. **Adding AI providers?** → [ADDING_PROVIDERS.md](./ADDING_PROVIDERS.md)
+2. **Understanding the journey?** → [PRODUCT_EVOLUTION.md](./PRODUCT_EVOLUTION.md) - Start here!
+3. **Understanding architecture?** → [DESIGN.md](./DESIGN.md)
+4. **How does agentic mode work?** → [AGENTIC_ARCHITECTURE.md](./AGENTIC_ARCHITECTURE.md)
+5. **Ready to deploy?** → [DEPLOYMENT.md](./DEPLOYMENT.md)
+6. **Need to test?** → [TESTING.md](./TESTING.md)
+7. **Understanding memory?** → [MEMORY_SYSTEM_COMPLETE.md](./MEMORY_SYSTEM_COMPLETE.md)
+8. **Adding AI providers?** → [ADDING_PROVIDERS.md](./ADDING_PROVIDERS.md)
 
 ---
 
@@ -166,12 +180,15 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 ### Production Features (All Implemented)
 - **Agentic Mode**: ReAct pattern with autonomous tool use (DEFAULT)
 - **Memory System**: Automatic extraction, tiered retention
-- **Image Generation**: Native Gemini 2.5 Flash Image
-- **Web Search**: Conservative mode with rate limiting
+- **Image Generation**: Native Gemini 2.5 Flash Image + image-to-image
+- **Web Search & Fetch**: 90-95% success with zero-cost fallback chain
+- **PRO Mode**: Gemini 2.0 Flash Pro + Thinking models
+- **Whim Editor**: Notion-like WYSIWYG with LaTeX, tables, code
 - **File Attachments**: Images and PDFs with multimodal processing
 - **Bilingual Support**: English and Chinese (equal quality)
-- **Progress Tracking**: Real-time visual feedback
-- **Testing**: 145+ unit tests, 71 E2E tests in 6 suites (100% pass rate)
+- **Progress Tracking**: Real-time visual feedback with streaming
+- **Stream Resilience**: Auto-resume on disconnect
+- **Testing**: 290 unit tests, 73 E2E tests in 8 files (100% pass rate)
 
 ### Tech Stack
 - Next.js 14 (App Router, TypeScript)
@@ -208,7 +225,10 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 
 ---
 
-**Last Updated**: November 23, 2025
-**Test Summary**: 145+ unit tests, 71 E2E tests in 6 suites (100% pass rate)
+**Last Updated**: November 24, 2025
+**Test Summary**: 290 unit tests, 73 E2E tests in 8 files (100% pass rate)
 **Documentation Status**: ✅ Current and maintained
-**Recent Additions**: Web-Fetch Improvements design document
+**Recent Additions**:
+- Product Evolution document (27-day journey)
+- WebFetch resilience implementation (90-95% success rate)
+- PRO Mode, Whim editor, Stream resilience
