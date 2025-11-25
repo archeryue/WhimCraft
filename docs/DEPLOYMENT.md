@@ -4,16 +4,16 @@ This guide covers deploying WhimCraft to Google Cloud Run for production use.
 
 ## 🔴 CRITICAL: Production URL & Authentication
 
-**Production URL**: `https://archerchat-697285727061.us-central1.run.app`
+**Production URL**: See `NEXT_PUBLIC_PRODUCTION_URL` in `.env.local`
 
 ### ⚠️ Dual URL Issue (MUST READ)
 Google Cloud Run automatically creates TWO URLs for your service:
-1. **Project-based URL**: `https://archerchat-697285727061.us-central1.run.app` ✅ (ACTIVE)
-2. **Generated URL**: `https://archerchat-er7tpljqpa-uc.a.run.app` (alternate)
+1. **Project-based URL**: `<YOUR_PRODUCTION_URL>` (e.g., `https://your-app-name-123456.region.run.app`) ✅ (RECOMMENDED)
+2. **Generated URL**: Alternative Cloud Run assigned URL (e.g., `https://your-app-name-xxx.a.run.app`)
 
 **CRITICAL FOR AUTHENTICATION**:
 - NEXTAUTH_URL **MUST** match your Google OAuth redirect URL
-- Current configuration: `https://archerchat-697285727061.us-central1.run.app`
+- Current configuration: See `.env.local` file
 - If URLs don't match, authentication will fail on first attempt!
 - Always use the same URL consistently throughout your application
 
@@ -207,14 +207,14 @@ gcloud run services update archerchat \
 
 ### 8. ⚠️ CRITICAL: Configure Google OAuth & NEXTAUTH_URL
 
-**Your production URL**: `https://archerchat-697285727061.us-central1.run.app`
+**Your production URL**: See `NEXT_PUBLIC_PRODUCTION_URL` in `.env.local`
 
 #### Google OAuth Configuration
-1. Go to [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials?project=archerchat-3d462)
+1. Go to [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials)
 2. Select your OAuth 2.0 Client ID
 3. Under "Authorized redirect URIs", ensure you have:
    ```
-   https://archerchat-697285727061.us-central1.run.app/api/auth/callback/google
+   <YOUR_PRODUCTION_URL>/api/auth/callback/google
    ```
 4. Remove any incorrect URLs
 5. Click "Save"
@@ -223,9 +223,10 @@ gcloud run services update archerchat \
 
 ```bash
 # Update NEXTAUTH_URL to match your OAuth redirect URL
+# Replace <YOUR_PRODUCTION_URL> with your actual Cloud Run URL
 gcloud run services update archerchat \
   --region us-central1 \
-  --update-env-vars "NEXTAUTH_URL=https://archerchat-697285727061.us-central1.run.app" \
+  --update-env-vars "NEXTAUTH_URL=<YOUR_PRODUCTION_URL>" \
   --project archerchat-3d462
 ```
 
@@ -306,16 +307,17 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 **Cause**: NEXTAUTH_URL doesn't match the URL you're accessing from
 
 **Problem**: Google Cloud Run creates two URLs for your service:
-- `https://archerchat-697285727061.us-central1.run.app` (project-based)
-- `https://archerchat-er7tpljqpa-uc.a.run.app` (generated)
+- Project-based URL (e.g., `https://your-app-name-123456.region.run.app`)
+- Generated URL (e.g., `https://your-app-name-xxx.a.run.app`)
 
 **Solution**:
 1. Check which URL is configured in Google OAuth redirect URIs
 2. Update NEXTAUTH_URL to match that exact URL:
    ```bash
+   # Replace <YOUR_PRODUCTION_URL> with your actual Cloud Run URL
    gcloud run services update archerchat \
      --region us-central1 \
-     --update-env-vars "NEXTAUTH_URL=https://archerchat-697285727061.us-central1.run.app" \
+     --update-env-vars "NEXTAUTH_URL=<YOUR_PRODUCTION_URL>" \
      --project archerchat-3d462
    ```
 3. Always access the application using the same URL
@@ -345,7 +347,7 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 **Solution**:
 1. Verify OAuth redirect URIs include production URL
 2. Ensure NEXTAUTH_URL matches the actual Cloud Run URL (no trailing slash)
-3. Use the project-based URL: `https://archerchat-697285727061.us-central1.run.app`
+3. Use the project-based URL from your `.env.local` file
 
 ### Container fails to start
 
