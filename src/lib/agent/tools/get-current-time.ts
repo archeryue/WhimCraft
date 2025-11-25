@@ -10,8 +10,11 @@ import { BaseTool, successResult, errorResult } from './base';
 export class GetCurrentTimeTool extends BaseTool {
   name = 'get_current_time';
 
-  description = `Get the current date and time. **CRITICAL**: Your training data is outdated - you don't know today's date.
-ALWAYS use this tool when asked about today's date, current time, or day of week. Never guess or use your training knowledge for current date/time.`;
+  description = `Get the current date and time in specific formats or timezones. Use this when you need:
+- Different timezone information (e.g., "Asia/Shanghai", "America/New_York")
+- Specific time formats (ISO, time-only, date-only)
+- Current time of day (hours/minutes/seconds)
+Note: Today's date is already provided in your system prompt.`;
 
   parameters: ToolParameter[] = [
     {
