@@ -126,7 +126,7 @@ npm run test:e2e:fast # E2E tests (71 tests, 6 suites, ~2 min)
 - **NEVER** deploy unless user explicitly requests it
 - **ALWAYS** run `npm run build` and `npx jest` first
 - **ALWAYS** read `docs/DEPLOYMENT.md` for steps
-- Production URL: `https://archerchat-697285727061.us-central1.run.app`
+- Production URL: See `NEXT_PUBLIC_PRODUCTION_URL` in `.env.local`
 
 ### 5. 🤖 MODEL CONFIG: Never Change Without Permission
 - **NEVER** modify `src/config/models.ts` without explicit user request
