@@ -108,8 +108,8 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 ### 🧪 [TESTING.md](./TESTING.md)
 **Complete testing guide**
 
-- **Unit Tests**: 290 tests with Jest (100% pass rate)
-- **E2E Tests**: 73 tests in 8 files with Playwright
+- **Unit Tests**: 307 tests with Jest (100% pass rate)
+- **E2E Tests**: 72 tests in 6 suites with Playwright
 - Test structure and organization (numbered test suites)
 - Running tests (unit + E2E, ~2 minutes)
 - Mock authentication system (triple-guard security)
@@ -188,7 +188,7 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 - **Bilingual Support**: English and Chinese (equal quality)
 - **Progress Tracking**: Real-time visual feedback with streaming
 - **Stream Resilience**: Auto-resume on disconnect
-- **Testing**: 290 unit tests, 73 E2E tests in 8 files (100% pass rate)
+- **Testing**: 307 unit tests, 72 E2E tests in 6 suites (100% pass rate)
 
 ### Tech Stack
 - Next.js 14 (App Router, TypeScript)
@@ -225,10 +225,11 @@ Comprehensive documentation for WhimCraft - a bilingual AI agent with advanced m
 
 ---
 
-**Last Updated**: November 24, 2025
-**Test Summary**: 290 unit tests, 73 E2E tests in 8 files (100% pass rate)
+**Last Updated**: December 1, 2025
+**Test Summary**: 307 unit tests, 72 E2E tests in 6 suites (100% pass rate)
 **Documentation Status**: ✅ Current and maintained
 **Recent Additions**:
+- History trimming utility (fix for deep conversation bug)
 - Product Evolution document (27-day journey)
 - WebFetch resilience implementation (90-95% success rate)
 - PRO Mode, Whim editor, Stream resilience

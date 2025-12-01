@@ -8,8 +8,8 @@ This document describes the comprehensive testing infrastructure for WhimCraft, 
 
 WhimCraft has a robust testing strategy with two layers of testing:
 
-1. **Unit Tests** (Jest) - 145+ tests with 100% pass rate
-2. **End-to-End Tests** (Playwright) - 71 comprehensive tests organized into 6 suites with automated authentication
+1. **Unit Tests** (Jest) - 307 tests with 100% pass rate
+2. **End-to-End Tests** (Playwright) - 72 comprehensive tests organized into 6 suites with automated authentication
 
 **Quick Start:**
 ```bash
@@ -55,14 +55,15 @@ src/__tests__/
     context-engineering/ # Context orchestration (8 tests)
     agent/               # Agent system (58 tests)
     image/               # Image generation tests
+    providers/           # Provider utilities (17 tests)
 ```
 
 ### Test Coverage
 
-- **Total Tests**: 145+
+- **Total Tests**: 307
 - **Pass Rate**: 100%
 - **Coverage**: Core business logic and critical paths
-- **Focus Areas**: Memory, web search, agent tools, context engineering
+- **Focus Areas**: Memory, web search, agent tools, context engineering, history utilities
 
 ---
 
@@ -161,7 +162,7 @@ The E2E tests are organized into 6 comprehensive suites with numbered prefixes f
 - ✅ Visual indicators
 - ✅ Edge cases
 
-**Test Results**: 71/71 passing (100% success rate)
+**Test Results**: 72/72 passing (100% success rate)
 
 ### Mock Authentication System
 
@@ -465,8 +466,8 @@ test.describe('Feature Name', () => {
 
 ### Test Execution Time
 
-- **Unit Tests**: ~10 seconds (all 145 tests)
-- **E2E Tests**: ~2 minutes (71 tests, 6 suites)
+- **Unit Tests**: ~30 seconds (all 307 tests)
+- **E2E Tests**: ~2 minutes (72 tests, 6 suites)
 - **Total**: ~2-3 minutes for full test suite
 
 ### Optimization
@@ -483,7 +484,7 @@ After the November 2025 refactoring:
 - **Before**: 28+ test files, many slow/redundant tests
 - **After**: 6 well-organized test suites
 - **Speed**: 87% faster execution time
-- **Pass Rate**: 100% (71/71 tests passing)
+- **Pass Rate**: 100% (72/72 tests passing)
 
 See `docs/TEST_SPEED_FINAL_SUMMARY.md` for detailed optimization analysis.
 
@@ -565,7 +566,7 @@ See `docs/TEST_SPEED_FINAL_SUMMARY.md` for detailed optimization analysis.
 
 ---
 
-**Last Updated**: November 23, 2025
-**Test Coverage**: 71 E2E tests (6 suites), 145+ unit tests
+**Last Updated**: December 1, 2025
+**Test Coverage**: 72 E2E tests (6 suites), 307 unit tests
 **Pass Rate**: 100%
 **Maintained By**: Archer & Claude Code
