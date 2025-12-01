@@ -84,14 +84,14 @@ export function ChatMessage({ message, userName, userAvatar, progressEvents: ext
           )
         ) : (
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
-            AI
+            Ly
           </div>
         )}
       </div>
 
       <div className="flex-1 min-w-0 overflow-hidden">
         <div className="font-semibold text-sm mb-2 text-slate-700 select-none cursor-default">
-          {isUser ? userName || "You" : "Assistant"}
+          {isUser ? userName || "You" : "Lydia Housecarl"}
         </div>
 
         {/* Progress Tracking - Show above content when available */}
