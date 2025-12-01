@@ -326,7 +326,7 @@ export async function POST(req: NextRequest) {
               files,
             });
 
-            fullResponse = result.response;
+            fullResponse = result.response || '';
 
             // Stream the final response
             const contentLine = `[CONTENT]${JSON.stringify(fullResponse)}\n`;
@@ -471,7 +471,7 @@ export async function POST(req: NextRequest) {
               files,
             });
 
-            fullResponse = result.response;
+            fullResponse = result.response || '';
 
             // Stream the final response
             const contentLine = `[CONTENT]${JSON.stringify(fullResponse)}\n`;
