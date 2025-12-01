@@ -55,6 +55,13 @@ Guide for implementing new AI providers using the `IAIProvider` interface. Curre
 
 ---
 
+## Planning
+
+### [FEATURE_PLAN_V2.md](./FEATURE_PLAN_V2.md)
+**Status: Planning** - Three major features: Paper Reader (analyze arXiv papers), Repo Reader (analyze GitHub repos), Navigator Welcome Page (dashboard with task recommendations).
+
+---
+
 ## Key Features
 
 - **Agentic Mode**: ReAct pattern with autonomous tool use (default)

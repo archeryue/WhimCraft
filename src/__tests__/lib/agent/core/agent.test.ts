@@ -28,6 +28,9 @@ describe('Agent', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock implementations (not just call history)
+    mockGenerateResponse.mockReset();
+    mockStreamResponse.mockReset();
 
     // Configure the mock to return our mock provider
     (ProviderFactory.createDefaultProvider as jest.Mock).mockReturnValue({
@@ -228,6 +231,137 @@ describe('Agent', () => {
       expect(result.response).toBe('Valid response after retry');
       // Should have called generateResponse twice
       expect(mockGenerateResponse).toHaveBeenCalledTimes(2);
+    });
+
+    it('uses simple retry without adding error messages', async () => {
+      const originalQuestion = 'What is the capital of France?';
+
+      // First call: invalid format, second call: valid JSON
+      mockGenerateResponse
+        .mockResolvedValueOnce({
+          content: 'Paris is the capital of France.',
+          usage: { totalTokens: 20 },
+        })
+        .mockResolvedValueOnce({
+          content: '```json\n' + JSON.stringify({
+            thinking: 'Answering about France capital',
+            action: 'respond',
+            response: 'The capital of France is Paris.',
+          }) + '\n```',
+          usage: { totalTokens: 30 },
+        });
+
+      const agent = new Agent(mockConfig);
+
+      await agent.run({
+        message: originalQuestion,
+        conversationHistory: [],
+      });
+
+      // Verify retry was called
+      expect(mockGenerateResponse).toHaveBeenCalledTimes(2);
+
+      // Get both calls' messages - they should be the same (simple retry)
+      const firstCallMessages = mockGenerateResponse.mock.calls[0][0];
+      const secondCallMessages = mockGenerateResponse.mock.calls[1][0];
+
+      // Messages should be identical - no error messages added
+      expect(secondCallMessages.length).toBe(firstCallMessages.length);
+    });
+
+    // Fix #1: Handle missing response field in JSON - use raw text as fallback
+    it('uses raw text fallback when JSON has missing response field', async () => {
+      // JSON is valid but missing the "response" field
+      // The raw content contains the actual answer, so use it as fallback
+      const jsonContent = '```json\n' + JSON.stringify({
+        thinking: 'I should respond',
+        action: 'respond',
+        // Note: response field is intentionally missing
+        confidence: 0.9,
+      }) + '\n```';
+
+      mockGenerateResponse.mockResolvedValue({
+        content: jsonContent,
+        usage: { totalTokens: 50 },
+      });
+
+      const agent = new Agent(mockConfig);
+
+      const result = await agent.run({
+        message: 'Test',
+        conversationHistory: [],
+      });
+
+      // Should use raw text as fallback since response field is missing
+      expect(result.response).toBe(jsonContent);
+      expect(typeof result.response).toBe('string');
+    });
+
+    it('uses raw text fallback when raw JSON has missing response field', async () => {
+      // Raw JSON without code blocks, missing response field
+      const jsonContent = JSON.stringify({
+        thinking: 'Processing request',
+        action: 'respond',
+        // response field missing
+      });
+
+      mockGenerateResponse.mockResolvedValue({
+        content: jsonContent,
+        usage: { totalTokens: 50 },
+      });
+
+      const agent = new Agent(mockConfig);
+
+      const result = await agent.run({
+        message: 'Test',
+        conversationHistory: [],
+      });
+
+      // Should use raw text as fallback
+      expect(result.response).toBe(jsonContent);
+      expect(typeof result.response).toBe('string');
+    });
+
+    it('uses raw text fallback when response is null', async () => {
+      // Explicit null response value
+      const jsonContent = '```json\n{"thinking": "test", "action": "respond", "response": null}\n```';
+
+      mockGenerateResponse.mockResolvedValue({
+        content: jsonContent,
+        usage: { totalTokens: 50 },
+      });
+
+      const agent = new Agent(mockConfig);
+
+      const result = await agent.run({
+        message: 'Test',
+        conversationHistory: [],
+      });
+
+      // Should use raw text as fallback since response is null
+      expect(result.response).toBe(jsonContent);
+      expect(typeof result.response).toBe('string');
+    });
+
+    // Simple retry uses raw response as fallback
+    it('uses raw text as fallback when all retries fail', async () => {
+      const plainTextResponse = 'This is a helpful answer about your question.';
+
+      mockGenerateResponse.mockResolvedValue({
+        content: plainTextResponse,
+        usage: { totalTokens: 50 },
+      });
+
+      const agent = new Agent(mockConfig);
+
+      const result = await agent.run({
+        message: 'Test',
+        conversationHistory: [],
+      });
+
+      // Should use the raw response as fallback
+      expect(result.response).toBe(plainTextResponse);
+      expect(typeof result.response).toBe('string');
     });
   });
 

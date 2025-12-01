@@ -251,26 +251,18 @@ export class Agent {
       console.log(`[Agent] Failed to parse response (attempt ${attempt}/${maxRetries}), retrying...`);
       console.log(`[Agent] Raw response that failed parsing:\n${response.content.substring(0, 1000)}`);
 
-      // Add a hint message for retry
-      if (attempt < maxRetries) {
-        messages.push({
-          role: 'assistant',
-          content: response.content,
-        });
-        messages.push({
-          role: 'user',
-          content: 'Your response was not in valid JSON format. Please respond with valid JSON in the format specified (either with ```json code blocks or as a raw JSON object with "thinking", "action", etc. fields).',
-        });
-      }
+      // Simple retry - just call LLM again with the same prompt
+      // Don't add error messages as they can confuse the model
     }
 
     // Fallback: treat raw text as response (more resilient than throwing error)
     console.log('[Agent] All retries failed, using raw text as fallback response');
+
     return {
       thinking: '',
       action: 'respond',
       toolCalls: [],
-      response: lastResponse,
+      response: lastResponse || '',
     };
   }
 
@@ -285,11 +277,16 @@ export class Agent {
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[1]);
+        // If action is 'respond' but response is empty/missing, treat as parse failure
+        // The raw text likely contains the actual answer
+        if (parsed.action === 'respond' && !parsed.response) {
+          return null;
+        }
         return {
           thinking: parsed.thinking || '',
           action: parsed.action || 'respond',
           toolCalls: parsed.tool_calls || [],
-          response: parsed.response,
+          response: parsed.response || '',
           confidence: parsed.confidence,
         };
       } catch {
@@ -302,11 +299,15 @@ export class Agent {
     if (rawJsonMatch) {
       try {
         const parsed = JSON.parse(rawJsonMatch[0]);
+        // If action is 'respond' but response is empty/missing, treat as parse failure
+        if (parsed.action === 'respond' && !parsed.response) {
+          return null;
+        }
         return {
           thinking: parsed.thinking || '',
           action: parsed.action || 'respond',
           toolCalls: parsed.tool_calls || [],
-          response: parsed.response,
+          response: parsed.response || '',
           confidence: parsed.confidence,
         };
       } catch {
