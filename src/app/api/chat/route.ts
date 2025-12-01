@@ -22,6 +22,7 @@ import { SearchResult } from "@/types/web-search";
 import { PromptAnalysisResult } from "@/types/prompt-analysis";
 import { MemoryFact } from "@/types/memory";
 import { convertConversationToWhimBlocks, convertConversationToArticleBlocks } from "@/lib/whim/converter";
+import { trimHistory } from "@/lib/providers/history-utils";
 import { Timestamp } from 'firebase-admin/firestore';
 import { Whim } from "@/types/whim";
 import { promptEnhancer } from "@/lib/image/prompt-enhancer";
@@ -315,11 +316,9 @@ export async function POST(req: NextRequest) {
               controller.enqueue(encoder.encode(`[PROGRESS]${JSON.stringify(progressEvent)}\n`));
             });
 
-            // Run the agent with message that includes whim context
-            // Limit history to last 5 messages to prevent token overflow
-            // (each message includes whim context which can be large)
-            const historyLimit = 5;
-            const limitedHistory = messages.slice(0, -1).slice(-historyLimit);
+            // Run the agent with trimmed history (last 5 messages, starts with user)
+            // Smaller limit because whim context can be large
+            const limitedHistory = trimHistory(messages.slice(0, -1), 5);
 
             const result = await agent.run({
               message: messageWithContext,
@@ -463,10 +462,8 @@ export async function POST(req: NextRequest) {
               controller.enqueue(encoder.encode(progressLine));
             });
 
-            // Run the agent
-            // Limit history to last 10 messages to prevent token overflow
-            const historyLimit = 10;
-            const limitedHistory = messages.slice(-historyLimit);
+            // Run the agent with trimmed history (last 10 messages, starts with user)
+            const limitedHistory = trimHistory(messages, 10);
 
             const result = await agent.run({
               message,
