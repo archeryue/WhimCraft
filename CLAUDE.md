@@ -225,13 +225,17 @@ e2e/                              # E2E tests (72 tests, 6 suites)
 
 ## Documentation
 
-See `docs/README.md` for comprehensive docs:
-- `DEPLOYMENT.md` - Cloud Run deployment
-- `TESTING.md` - Testing guide
-- `DESIGN.md` - System architecture
-- `MEMORY_SYSTEM_COMPLETE.md` - Memory details
-- `AGENTIC_ARCHITECTURE.md` - ReAct pattern
-- `WEB_SEARCH_DESIGN.md` - Web search integration
+See `docs/README.md` for full index. Key docs:
+
+| Category | Document | Description |
+|----------|----------|-------------|
+| Architecture | `DESIGN.md` | System architecture, tech stack |
+| Architecture | `AGENTIC_ARCHITECTURE.md` | ReAct pattern, agent tools |
+| Operations | `DEPLOYMENT.md` | Cloud Run deployment |
+| Operations | `TESTING.md` | Jest + Playwright testing |
+| Features | `MEMORY_SYSTEM.md` | Three-tier memory |
+| Features | `WEB_INTEGRATION.md` | Search + fetch |
+| Development | `ADDING_PROVIDERS.md` | AI provider guide |
 
 ---
 
