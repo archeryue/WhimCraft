@@ -7,6 +7,7 @@ import {
 } from "@/types/ai-providers";
 import { GEMINI_MODELS, ModelTier } from "@/config/models";
 import { FileAttachment, FileType } from "@/types/file";
+import { trimHistory } from "./history-utils";
 
 export class GeminiProvider implements IAIProvider {
   private client: GoogleGenerativeAI;
@@ -145,15 +146,14 @@ Remember: Gemini 2.0 Flash has native image generation capabilities built-in, so
 
       const model = this.client.getGenerativeModel(modelConfig);
 
-      // Convert messages to Gemini format
-      const history = messages.slice(0, -1).map((msg) => ({
-        role: msg.role === "user" ? "user" : ("model" as const),
+      // Convert messages to Gemini format (ensures history starts with 'user')
+      const trimmed = trimHistory(messages.slice(0, -1), messages.length);
+      const history = trimmed.map((msg) => ({
+        role: msg.role === 'user' ? 'user' as const : 'model' as const,
         parts: [{ text: msg.content }],
       }));
 
-      const chat = model.startChat({
-        history: history,
-      });
+      const chat = model.startChat({ history });
 
       // Send message with multimodal support if files are present
       const messageInput = hasFiles
@@ -204,13 +204,15 @@ Remember: Gemini 2.0 Flash has native image generation capabilities built-in, so
           },
         });
 
-        const history = messages.slice(0, -1).map((msg) => ({
-          role: msg.role === "user" ? "user" : ("model" as const),
+        // Convert messages to Gemini format (ensures history starts with 'user')
+        const trimmed = trimHistory(messages.slice(0, -1), messages.length);
+        const history = trimmed.map((msg) => ({
+          role: msg.role === 'user' ? 'user' as const : 'model' as const,
           parts: [{ text: msg.content }],
         }));
 
         const chat = fallbackModel.startChat({
-          history: history,
+          history,
         });
 
         try {
@@ -284,15 +286,14 @@ Remember: Gemini 2.0 Flash has native image generation capabilities built-in, so
 
       const model = this.client.getGenerativeModel(modelConfig);
 
-      // Convert messages to Gemini format
-      const history = messages.slice(0, -1).map((msg) => ({
-        role: msg.role === "user" ? "user" : ("model" as const),
+      // Convert messages to Gemini format (ensures history starts with 'user')
+      const trimmed = trimHistory(messages.slice(0, -1), messages.length);
+      const history = trimmed.map((msg) => ({
+        role: msg.role === 'user' ? 'user' as const : 'model' as const,
         parts: [{ text: msg.content }],
       }));
 
-      const chat = model.startChat({
-        history: history,
-      });
+      const chat = model.startChat({ history });
 
       // Send message with multimodal support if files are present
       const messageInput = hasFiles
@@ -349,13 +350,15 @@ Remember: Gemini 2.0 Flash has native image generation capabilities built-in, so
             },
           });
 
-          const history = messages.slice(0, -1).map((msg) => ({
-            role: msg.role === "user" ? "user" : ("model" as const),
-            parts: [{ text: msg.content }],
-          }));
+          // Convert messages to Gemini format (ensures history starts with 'user')
+          const trimmed = trimHistory(messages.slice(0, -1), messages.length);
+        const history = trimmed.map((msg) => ({
+          role: msg.role === 'user' ? 'user' as const : 'model' as const,
+          parts: [{ text: msg.content }],
+        }));
 
           const chat = fallbackModel.startChat({
-            history: history,
+            history,
           });
 
           const result = await chat.sendMessage(lastMessage.content);

@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GEMINI_MODELS, ModelTier } from "@/config/models";
+import { trimHistory } from "./providers/history-utils";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -33,9 +34,10 @@ export async function* streamGeminiResponse(
     },
   });
 
-  // Convert messages to Gemini format
-  const history = messages.slice(0, -1).map((msg) => ({
-    role: msg.role === "user" ? "user" : "model",
+  // Convert messages to Gemini format (ensures history starts with 'user')
+  const trimmed = trimHistory(messages.slice(0, -1), messages.length);
+  const history = trimmed.map((msg) => ({
+    role: msg.role === 'user' ? 'user' as const : 'model' as const,
     parts: [{ text: msg.content }],
   }));
 
