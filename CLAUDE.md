@@ -15,9 +15,9 @@ npm run build                  # Production build (strict TypeScript)
 npm run lint                   # ESLint checks
 
 # Testing (see docs/TESTING.md for complete guide)
-npx jest                       # Run all unit tests (145+)
+npx jest                       # Run all unit tests (307)
 npx jest --watch              # Watch mode for TDD
-npm run test:e2e:fast         # Run E2E tests (71 tests, ~2 min)
+npm run test:e2e:fast         # Run E2E tests (72 tests, ~2 min)
 npx playwright test --ui      # Interactive E2E test UI
 
 # Deployment (see docs/DEPLOYMENT.md for complete guide)
@@ -43,7 +43,7 @@ gh run view <run-id>
 - Secret Scanning (Gitleaks)
 - ESLint (code quality)
 - TypeScript Build (type safety)
-- Jest Tests (145+ tests)
+- Jest Tests (307 tests)
 - NPM Security Audit
 
 ## Key Architecture
@@ -108,8 +108,8 @@ Conversation → /save command → AI Title + JSON Blocks → Whim (TipTap Edito
 **After Implementation:**
 ```bash
 npm run build         # TypeScript check
-npx jest              # Unit tests (145+)
-npm run test:e2e:fast # E2E tests (71 tests, 6 suites, ~2 min)
+npx jest              # Unit tests (307)
+npm run test:e2e:fast # E2E tests (72 tests, 6 suites, ~2 min)
 ```
 - **NEVER** commit until all tests pass (100% pass rate required)
 - **NEVER** skip E2E tests for user-facing features
@@ -219,21 +219,25 @@ src/
   config/
     models.ts                     # Model configuration
     feature-flags.ts              # Feature toggles
-  __tests__/                      # Jest tests (145+)
-e2e/                              # E2E tests (71 tests, 6 suites)
+  __tests__/                      # Jest tests (307)
+e2e/                              # E2E tests (72 tests, 6 suites)
 ```
 
 ## Documentation
 
-See `docs/README.md` for comprehensive docs:
-- `DEPLOYMENT.md` - Cloud Run deployment
-- `TESTING.md` - Testing guide
-- `DESIGN.md` - System architecture
-- `MEMORY_SYSTEM_COMPLETE.md` - Memory details
-- `AGENTIC_ARCHITECTURE.md` - ReAct pattern
-- `WEB_SEARCH_DESIGN.md` - Web search integration
+See `docs/README.md` for full index. Key docs:
+
+| Category | Document | Description |
+|----------|----------|-------------|
+| Architecture | `DESIGN.md` | System architecture, tech stack |
+| Architecture | `AGENTIC_ARCHITECTURE.md` | ReAct pattern, agent tools |
+| Operations | `DEPLOYMENT.md` | Cloud Run deployment |
+| Operations | `TESTING.md` | Jest + Playwright testing |
+| Features | `MEMORY_SYSTEM.md` | Three-tier memory |
+| Features | `WEB_INTEGRATION.md` | Search + fetch |
+| Development | `ADDING_PROVIDERS.md` | AI provider guide |
 
 ---
 
-**Last Updated**: November 23, 2025
+**Last Updated**: December 1, 2025
 **Maintained By**: Archer & Claude Code
