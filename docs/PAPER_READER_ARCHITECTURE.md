@@ -37,15 +37,13 @@ Paper Reader accepts academic papers in multiple formats, extracts content, anal
 │  - Extract text content                                          │
 │  - Extract metadata (title, authors, abstract)                   │
 │  - Handle multi-page documents                                   │
-│  - Chunking for token limits                                     │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      AI ANALYZER                                 │
-│  - Send chunks to Gemini                                         │
+│  - Send full text to Gemini (2M token context)                   │
 │  - Generate structured analysis                                  │
-│  - Handle long papers (multi-pass analysis)                      │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
@@ -198,32 +196,11 @@ interface Section {
 async function parsePdf(buffer: ArrayBuffer): Promise<ParsedPaper>;
 ```
 
-### 3.3 Chunking Strategy
+### 3.3 Full-Text Processing
 
-Academic papers can be 10-50+ pages. Gemini has token limits.
+The READER tier uses Gemini 1.5 Pro with a **2M token context window**. Since academic papers are typically 10-50 pages (~10,000-50,000 tokens), we can always send the full text in a single pass without chunking.
 
-**Approach 1: Single-Pass (for short papers)**
-- If total tokens < 100K, send entire text
-- Gemini 1.5/2.0 supports up to 1M tokens
-
-**Approach 2: Multi-Pass (for long papers)**
-1. First pass: Summary of each section
-2. Second pass: Synthesize summaries into final analysis
-
-**Approach 3: Smart Sampling**
-- Always include: Abstract, Introduction, Conclusion
-- Sample from: Methodology, Results
-- Skip: References, Appendices
-
-```typescript
-interface ChunkingConfig {
-  maxTokensPerChunk: number;  // Default: 100000
-  strategy: 'full' | 'multi-pass' | 'smart-sample';
-  prioritySections: string[]; // ['abstract', 'introduction', 'conclusion']
-}
-```
-
-**Recommendation**: Start with Approach 1 (full text) since Gemini supports large contexts. Fall back to Approach 3 for very long papers.
+This simplifies the architecture significantly - no need for multi-pass analysis or smart sampling strategies.
 
 ---
 
