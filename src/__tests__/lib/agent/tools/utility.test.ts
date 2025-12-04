@@ -166,8 +166,8 @@ describe('Tool Registry', () => {
   it('exports all tools', async () => {
     const { allTools, toolRegistry } = await import('@/lib/agent/tools');
 
-    expect(allTools.length).toBe(7);
-    expect(toolRegistry.size).toBe(7);
+    expect(allTools.length).toBe(10);
+    expect(toolRegistry.size).toBe(10);
 
     const toolNames = allTools.map((t) => t.name);
     expect(toolNames).toContain('web_search');
@@ -177,6 +177,10 @@ describe('Tool Registry', () => {
     expect(toolNames).toContain('recall_details');
     expect(toolNames).toContain('get_current_time');
     expect(toolNames).toContain('image_generate');
+    // PDF tools
+    expect(toolNames).toContain('pdf_fetch');
+    expect(toolNames).toContain('text_extract');
+    expect(toolNames).toContain('figure_extract');
   });
 
   it('retrieves tools by name', async () => {

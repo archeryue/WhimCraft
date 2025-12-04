@@ -14,6 +14,9 @@ import { memorySaveTool } from './memory-save';
 import { recallDetailsTool, storeResult, clearStoredResults } from './recall-details';
 import { getCurrentTimeTool } from './get-current-time';
 import { imageGenerateTool } from './image-generate';
+import { pdfFetchTool } from './pdf-fetch';
+import { textExtractTool } from './text-extract';
+import { figureExtractTool } from './figure-extract';
 
 // Export individual tools
 export { webSearchTool } from './web-search';
@@ -23,6 +26,11 @@ export { memorySaveTool } from './memory-save';
 export { recallDetailsTool, storeResult, clearStoredResults } from './recall-details';
 export { getCurrentTimeTool } from './get-current-time';
 export { imageGenerateTool } from './image-generate';
+export { pdfFetchTool } from './pdf-fetch';
+export type { PdfToolContext } from './pdf-fetch';
+export { textExtractTool } from './text-extract';
+export { figureExtractTool } from './figure-extract';
+export type { ExtractedFigure } from './figure-extract';
 
 // Export base utilities
 export {
@@ -46,6 +54,9 @@ export const allTools: Tool[] = [
   recallDetailsTool,
   getCurrentTimeTool,
   imageGenerateTool,
+  pdfFetchTool,
+  textExtractTool,
+  figureExtractTool,
 ];
 
 /**
