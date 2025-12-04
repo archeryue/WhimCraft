@@ -118,6 +118,11 @@ export async function POST(req: NextRequest) {
       };
 
       try {
+        const startTime = Date.now();
+        const logTiming = (stage: string) => {
+          console.log(`[Paper Analysis] ${stage}: ${Date.now() - startTime}ms`);
+        };
+
         // Stage 1: Validating URL
         sendProgress({
           stage: "validating",
@@ -126,6 +131,7 @@ export async function POST(req: NextRequest) {
         });
 
         const resolved = await resolveUrl(url);
+        logTiming("URL resolved");
 
         sendProgress({
           stage: "validating",
@@ -141,6 +147,7 @@ export async function POST(req: NextRequest) {
         });
 
         const fetchResult = await fetchPdf(resolved.pdfUrl);
+        logTiming("PDF fetched");
 
         sendProgress({
           stage: "fetching",
@@ -156,6 +163,8 @@ export async function POST(req: NextRequest) {
         });
 
         const parsed = await parsePdf(fetchResult.buffer);
+        logTiming("PDF parsed");
+        console.log(`[Paper Analysis] Text length: ${parsed.text.length} chars`);
 
         sendProgress({
           stage: "parsing",
@@ -187,6 +196,7 @@ export async function POST(req: NextRequest) {
 
           analysis = await analysisPromise;
           clearInterval(progressInterval);
+          logTiming("AI analysis complete");
         } catch (error) {
           throw new Error(
             `Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`

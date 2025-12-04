@@ -68,12 +68,20 @@ Requires pdf_fetch to be called first. Returns base64-encoded PNG images.`;
       description: 'Ending page to extract from (inclusive)',
       required: false,
     },
+    {
+      name: 'verifyWithLlm',
+      type: 'boolean',
+      description: 'Use LLM vision to verify and filter out text blocks (requires GOOGLE_API_KEY)',
+      required: false,
+      default: false,
+    },
   ];
 
   protected async run(params: Record<string, unknown>): Promise<ToolResult> {
     const maxFigures = (params.maxFigures as number) || DEFAULT_MAX_FIGURES;
     const startPage = params.startPage as number | undefined;
     const endPage = params.endPage as number | undefined;
+    const verifyWithLlm = (params.verifyWithLlm as boolean) || false;
 
     // Get PDF buffer from context
     const extendedContext = this.context as PdfToolContext;
@@ -102,6 +110,9 @@ Requires pdf_fetch to be called first. Returns base64-encoded PNG images.`;
       }
       if (endPage !== undefined) {
         formData.append('end_page', String(endPage));
+      }
+      if (verifyWithLlm) {
+        formData.append('verify_with_llm', 'true');
       }
 
       // Call the Python service
