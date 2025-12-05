@@ -268,6 +268,7 @@ export class PaperReaderAgent {
     return {
       success: true,
       metadata: {
+        title: skillResult.metadata?.title,
         sourceUrl: url,
         analyzedAt: new Date().toISOString(),
       },

@@ -115,6 +115,12 @@ npm run test:e2e:fast # E2E tests (72 tests, 6 suites, ~2 min)
 - **NEVER** skip E2E tests for user-facing features
 - **ALWAYS** add tests for new features
 
+**E2E Test Account:**
+- A test account exists for E2E testing that is whitelisted and can be used for authenticated API testing
+- Use Playwright E2E tests (`npm run test:e2e:fast`) which automatically handle authentication
+- For manual API testing, run the E2E tests or use the Playwright UI (`npx playwright test --ui`)
+- **ALWAYS** use E2E tests for testing authenticated features instead of trying to bypass auth with direct curl calls
+
 ### 3. ✅ VERIFICATION: Verify Before Reporting Success
 1. Make code changes
 2. **WAIT** 5-10 seconds for webpack to recompile

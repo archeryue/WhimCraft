@@ -48,6 +48,10 @@ export interface SkillOutput {
     costEstimate?: number;
     toolsInvoked?: string[];
     durationMs?: number;
+    /** Paper title (from arXiv API or PDF metadata) */
+    title?: string;
+    /** arXiv ID if applicable */
+    arxivId?: string;
   };
 }
 

@@ -77,10 +77,15 @@ export class PaperReaderSkill extends BaseSkill {
 
     // Resolve URL to get actual PDF URL (handles arXiv abstract URLs, etc.)
     let pdfUrl: string;
+    let paperTitle: string | undefined;
+    let arxivId: string | undefined;
     try {
       const resolved = await resolveUrl(url);
       pdfUrl = resolved.pdfUrl;
+      paperTitle = resolved.metadata?.title;
+      arxivId = resolved.metadata?.arxivId;
       console.log(`[PaperReaderSkill] Resolved PDF URL: ${pdfUrl}`);
+      console.log(`[PaperReaderSkill] Paper title: ${paperTitle || 'Not found'}`);
     } catch (error) {
       return this.errorOutput(`Failed to resolve URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -158,6 +163,8 @@ export class PaperReaderSkill extends BaseSkill {
       data: {
         url,
         query,
+        title: paperTitle,
+        arxivId,
         textLength: textContent.length,
         totalFigures: rawFigures.length,
         selectedFigures: keyFigures.length,
@@ -167,6 +174,8 @@ export class PaperReaderSkill extends BaseSkill {
       figures: keyFigures,
       metadata: {
         toolsInvoked: this.requiredTools,
+        title: paperTitle,
+        arxivId,
       },
     };
   }
@@ -354,23 +363,24 @@ ${textContent.substring(0, 15000)}
 KEY FIGURES IDENTIFIED:
 ${figureDescriptions || 'No key figures identified'}
 
-Please provide:
-1. A concise summary answering the user's question (2-3 sentences)
-2. Key findings relevant to the question
-3. Methodology overview if relevant
-4. Limitations or caveats
+Please provide a comprehensive analysis with ALL of the following sections (these are REQUIRED):
 
-Format your response as JSON:
+1. **Summary**: A concise summary answering the user's question (2-3 sentences)
+2. **Key Findings**: The main contributions and findings of this paper (bullet points or list)
+3. **Methodology**: How the research was conducted, what techniques/methods were used
+4. **Limitations**: Any limitations, caveats, or areas for improvement mentioned
+
+Format your response as JSON with EXACTLY these section titles:
 {
-  "summary": "...",
+  "summary": "2-3 sentence summary...",
   "sections": [
-    {"title": "Key Findings", "content": "...", "type": "text"},
-    {"title": "Methodology", "content": "...", "type": "text"},
-    {"title": "Limitations", "content": "...", "type": "text"}
+    {"title": "Key Findings", "content": "• Finding 1\\n• Finding 2\\n• Finding 3...", "type": "text"},
+    {"title": "Methodology", "content": "Description of methods used...", "type": "text"},
+    {"title": "Limitations", "content": "Any limitations mentioned...", "type": "text"}
   ]
 }
 
-Return ONLY the JSON.`;
+IMPORTANT: All sections are REQUIRED. Return ONLY the JSON.`;
 
     try {
       const result = await model.generateContent(prompt);

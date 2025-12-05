@@ -36,10 +36,17 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
+# Install Python3 and PyMuPDF for figure extraction
+RUN apk add --no-cache python3 py3-pip && \
+    pip3 install --no-cache-dir --break-system-packages pymupdf
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+
+# Copy Python figure extraction script
+COPY --from=builder /app/services/pdf-figures/main.py ./services/pdf-figures/
 
 # Set the correct permission for prerender cache
 RUN mkdir .next

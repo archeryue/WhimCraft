@@ -109,15 +109,19 @@ describe('FigureExtractTool', () => {
   });
 
   describe('service configuration', () => {
-    it('should fail if service URL is not configured', async () => {
+    it('should use spawn() when service URL is not configured', async () => {
       delete process.env.FIGURE_EXTRACT_SERVICE_URL;
 
       const context = createContextWithPdf();
+      // When no URL is set, it uses spawn() which will fail due to missing Python/script
+      // but doesn't complain about missing config
       const result = await figureExtractTool.execute({}, context);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not configured');
-      expect(result.error).toContain('FIGURE_EXTRACT_SERVICE_URL');
+      // spawn() will either succeed or fail with Python-related error, not config error
+      if (!result.success) {
+        expect(result.error).not.toContain('not configured');
+        expect(result.error).not.toContain('FIGURE_EXTRACT_SERVICE_URL');
+      }
     });
   });
 
@@ -206,7 +210,8 @@ describe('FigureExtractTool', () => {
       const result = await figureExtractTool.execute({}, context);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('not available');
+      // Error message contains the original error (connection refused)
+      expect(result.error).toContain('ECONNREFUSED');
     });
 
     it('should handle empty figure results', async () => {

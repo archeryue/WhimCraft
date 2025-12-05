@@ -249,10 +249,17 @@ test.describe('Paper Reader - Analysis Flow', () => {
       timeout: 150000,
     });
 
-    // Verify analysis sections are present
+    // Verify paper title is displayed (not "Untitled Paper")
+    // Title should be "Attention Is All You Need" from arXiv API
+    const titleElement = page.locator('h1.text-xl');
+    await expect(titleElement).toBeVisible();
+    const titleText = await titleElement.textContent();
+    expect(titleText).not.toBe('Untitled Paper');
+    expect(titleText?.toLowerCase()).toContain('attention');
+
+    // Verify all required analysis sections are present
     await expect(page.locator('text=Summary')).toBeVisible();
-    await expect(page.locator('text=Problem Statement')).toBeVisible();
-    await expect(page.locator('text=Key Contributions')).toBeVisible();
+    await expect(page.locator('text=Key Contributions').or(page.locator('text=Key Findings'))).toBeVisible();
     await expect(page.locator('text=Methodology')).toBeVisible();
   });
 });

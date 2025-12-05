@@ -74,7 +74,7 @@ function detectPaperType(url: string): PaperSourceType | null {
 /**
  * Resolve arXiv URL to PDF URL and metadata
  */
-function resolveArxiv(url: string): ResolvedPaper {
+async function resolveArxiv(url: string): Promise<ResolvedPaper> {
   let arxivId: string | undefined;
 
   // Extract arXiv ID from abs URL
@@ -96,13 +96,51 @@ function resolveArxiv(url: string): ResolvedPaper {
   // Construct PDF URL
   const pdfUrl = `https://arxiv.org/pdf/${arxivId}.pdf`;
 
+  // Fetch title from arXiv API
+  const title = await fetchArxivTitle(arxivId);
+
   return {
     type: "arxiv",
     pdfUrl,
     metadata: {
       arxivId,
+      title,
     },
   };
+}
+
+/**
+ * Fetch paper title from arXiv API
+ */
+async function fetchArxivTitle(arxivId: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(
+      `https://export.arxiv.org/api/query?id_list=${arxivId}`
+    );
+
+    if (!response.ok) {
+      console.warn(`arXiv API returned ${response.status}`);
+      return undefined;
+    }
+
+    const xml = await response.text();
+
+    // Parse title from Atom XML
+    // Format: <title>Paper Title Here</title>
+    // Skip the first <title> which is the feed title
+    const titleMatches = xml.match(/<title>([^<]+)<\/title>/g);
+    if (titleMatches && titleMatches.length >= 2) {
+      // Second title is the paper title (first is feed title)
+      const paperTitle = titleMatches[1].replace(/<\/?title>/g, '').trim();
+      // Clean up whitespace and newlines
+      return paperTitle.replace(/\s+/g, ' ');
+    }
+
+    return undefined;
+  } catch (error) {
+    console.warn('Failed to fetch arXiv title:', error);
+    return undefined;
+  }
 }
 
 /**

@@ -197,6 +197,68 @@ def get_drawing_density(page, rect) -> float:
     return (intersecting_drawings / area) * 10000
 
 
+def extract_embedded_images(
+    doc: fitz.Document,
+    page_index: int,
+    min_size: int = 150,
+) -> list[Figure]:
+    """
+    Extract embedded raster images (png/jpg) from a page.
+
+    These are complete images embedded in the PDF, not rendered from vectors.
+    They should be extracted directly without cropping.
+    """
+    figures = []
+    page = doc[page_index]
+
+    # Get all images on this page
+    images = page.get_images(full=True)
+
+    for img_info in images:
+        xref = img_info[0]  # xref is the image reference number
+
+        try:
+            # Extract the actual image data
+            base_image = doc.extract_image(xref)
+
+            width = base_image["width"]
+            height = base_image["height"]
+            img_ext = base_image["ext"]  # png, jpeg, etc.
+            img_data = base_image["image"]
+
+            # Filter out small images (icons, bullets, etc.)
+            if width < min_size or height < min_size:
+                continue
+
+            # Filter out very small aspect ratio images (likely decorative)
+            aspect = width / height if height > 0 else 0
+            if aspect < 0.2 or aspect > 5:
+                continue
+
+            # Convert to PNG if needed, otherwise use as-is
+            if img_ext.lower() in ("png", "jpeg", "jpg"):
+                img_base64 = base64.b64encode(img_data).decode("utf-8")
+            else:
+                # Convert other formats to PNG using pixmap
+                pix = fitz.Pixmap(img_data)
+                img_base64 = base64.b64encode(pix.tobytes("png")).decode("utf-8")
+
+            figures.append(Figure(
+                page=page_index + 1,
+                imageBase64=img_base64,
+                dimensions={"width": width, "height": height},
+                bounds=None,  # Embedded images don't have page bounds
+                captionHint=f"embedded_{img_ext}",
+            ))
+
+        except Exception as e:
+            # Skip images that can't be extracted
+            print(f"[Extract] Failed to extract image xref={xref}: {e}")
+            continue
+
+    return figures
+
+
 def extract_figures(
     pdf_bytes: bytes,
     max_figures: int = 10,
@@ -207,7 +269,10 @@ def extract_figures(
     verify_with_llm: bool = False,
 ) -> list[Figure]:
     """
-    Extract vector figures from PDF using cluster_drawings().
+    Extract figures from PDF using multiple strategies:
+    1. Embedded images (png/jpg) - highest priority, already complete
+    2. Vector drawings (cluster_drawings) - for charts/diagrams drawn with vectors
+    3. Caption-based detection - fallback for figures not detected above
 
     Args:
         pdf_bytes: PDF file as bytes
@@ -239,7 +304,15 @@ def extract_figures(
 
         page = doc[page_index]
 
-        # Strategy A: Automatic Vector Detection
+        # Strategy A: Extract embedded images (png/jpg) - HIGHEST PRIORITY
+        # These are complete figures already embedded in the PDF
+        embedded_figs = extract_embedded_images(doc, page_index, min_size)
+        for fig in embedded_figs:
+            if len(figures) >= max_figures:
+                break
+            figures.append(fig)
+
+        # Strategy B: Automatic Vector Detection
         # cluster_drawings() groups nearby vector lines into bounding boxes
         try:
             drawing_rects = page.cluster_drawings(tolerance=10)
@@ -291,7 +364,12 @@ def extract_figures(
                 },
             ))
 
-        # Strategy B: Caption-based detection
+        # Strategy C: Caption-based detection (fallback)
+        # Skip if we already found embedded images on this page
+        # (embedded images are higher quality than caption-based extraction)
+        if embedded_figs:
+            continue
+
         # Look for "Figure X" or "Fig. X" captions and extract the region above
         page_figures_from_captions = []
         for caption_pattern in ["Figure ", "Fig. "]:
@@ -445,6 +523,82 @@ async def extract_figures_endpoint(
         )
 
 
+def cli_mode():
+    """
+    CLI mode: Read PDF from stdin, output JSON to stdout.
+
+    Usage:
+        cat document.pdf | python3 main.py --cli --max-figures 10
+        cat document.pdf | python3 main.py --cli --start-page 1 --end-page 5
+    """
+    import argparse
+    import json
+    import sys
+
+    parser = argparse.ArgumentParser(description="Extract figures from PDF")
+    parser.add_argument("--cli", action="store_true", help="Run in CLI mode (stdin/stdout)")
+    parser.add_argument("--max-figures", type=int, default=10, help="Max figures to extract")
+    parser.add_argument("--start-page", type=int, default=None, help="Starting page (1-indexed)")
+    parser.add_argument("--end-page", type=int, default=None, help="Ending page (inclusive)")
+    parser.add_argument("--verify-with-llm", action="store_true", help="Use LLM to verify figures")
+
+    args = parser.parse_args()
+
+    if not args.cli:
+        # Run HTTP server
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+        return
+
+    try:
+        # Read PDF from stdin
+        pdf_bytes = sys.stdin.buffer.read()
+
+        if not pdf_bytes:
+            result = {"success": False, "figures": [], "error": "No PDF data received on stdin"}
+            print(json.dumps(result))
+            sys.exit(1)
+
+        if not pdf_bytes.startswith(b"%PDF"):
+            result = {"success": False, "figures": [], "error": "Invalid PDF: missing PDF header"}
+            print(json.dumps(result))
+            sys.exit(1)
+
+        # Extract figures
+        figures = extract_figures(
+            pdf_bytes=pdf_bytes,
+            max_figures=args.max_figures,
+            start_page=args.start_page,
+            end_page=args.end_page,
+            verify_with_llm=args.verify_with_llm,
+        )
+
+        # Output JSON (same format as HTTP API)
+        result = {
+            "success": True,
+            "figures": [
+                {
+                    "page": fig.page,
+                    "imageBase64": fig.imageBase64,
+                    "dimensions": fig.dimensions,
+                    "bounds": fig.bounds,
+                    "captionHint": fig.captionHint,
+                }
+                for fig in figures
+            ],
+        }
+        print(json.dumps(result))
+
+    except Exception as e:
+        result = {"success": False, "figures": [], "error": str(e)}
+        print(json.dumps(result))
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import sys
+    if "--cli" in sys.argv:
+        cli_mode()
+    else:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
