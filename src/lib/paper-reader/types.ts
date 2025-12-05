@@ -49,27 +49,42 @@ export interface ParsedPaper {
 }
 
 /**
+ * Figure extracted from paper with importance scoring
+ */
+export interface PaperFigure {
+  id: string;
+  page: number;
+  imageBase64: string;
+  caption?: string;
+  importance: number;
+  importanceReason?: string;
+  type?: string;
+}
+
+/**
  * Structured paper analysis from AI
  */
 export interface PaperAnalysis {
   metadata: {
-    title: string;
-    authors: string[];
+    title?: string;
+    authors?: string[];
     publishedDate?: string;
     venue?: string;
     sourceUrl: string;
     arxivId?: string;
+    analyzedAt?: string;
   };
   analysis: {
     summary: string;
-    problemStatement: string;
+    problemStatement?: string;
     keyContributions: string[];
-    methodology: string;
-    results: string;
-    limitations: string;
-    futureWork: string;
+    methodology?: string;
+    results?: string;
+    limitations?: string;
+    futureWork?: string;
     keyTakeaways: string[];
   };
+  figures?: PaperFigure[];
 }
 
 /**

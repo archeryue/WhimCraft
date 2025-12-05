@@ -24,13 +24,13 @@ export function analysisToWhimData(analysis: PaperAnalysis): PaperWhimData {
   const blocks = markdownToBlocks(markdown);
 
   return {
-    title: analysis.metadata.title,
+    title: analysis.metadata.title || "Untitled Paper",
     blocks,
     metadata: {
       type: "paper-analysis",
       sourceUrl: analysis.metadata.sourceUrl,
       arxivId: analysis.metadata.arxivId,
-      authors: analysis.metadata.authors,
+      authors: analysis.metadata.authors || [],
       publishedDate: analysis.metadata.publishedDate,
       analyzedAt: new Date().toISOString(),
     },
@@ -46,10 +46,10 @@ export function analysisToMarkdown(analysis: PaperAnalysis): string {
   const sections: string[] = [];
 
   // Header with metadata
-  sections.push(`# ${metadata.title}`);
+  sections.push(`# ${metadata.title || "Untitled Paper"}`);
   sections.push("");
 
-  if (metadata.authors.length > 0) {
+  if (metadata.authors && metadata.authors.length > 0) {
     sections.push(`**Authors:** ${metadata.authors.join(", ")}`);
   }
   if (metadata.publishedDate) {
@@ -67,10 +67,12 @@ export function analysisToMarkdown(analysis: PaperAnalysis): string {
   sections.push("");
 
   // Problem Statement
-  sections.push("## Problem Statement");
-  sections.push("");
-  sections.push(a.problemStatement);
-  sections.push("");
+  if (a.problemStatement) {
+    sections.push("## Problem Statement");
+    sections.push("");
+    sections.push(a.problemStatement);
+    sections.push("");
+  }
 
   // Key Contributions
   if (a.keyContributions.length > 0) {
@@ -83,28 +85,36 @@ export function analysisToMarkdown(analysis: PaperAnalysis): string {
   }
 
   // Methodology
-  sections.push("## Methodology");
-  sections.push("");
-  sections.push(a.methodology);
-  sections.push("");
+  if (a.methodology) {
+    sections.push("## Methodology");
+    sections.push("");
+    sections.push(a.methodology);
+    sections.push("");
+  }
 
   // Results
-  sections.push("## Results");
-  sections.push("");
-  sections.push(a.results);
-  sections.push("");
+  if (a.results) {
+    sections.push("## Results");
+    sections.push("");
+    sections.push(a.results);
+    sections.push("");
+  }
 
   // Limitations
-  sections.push("## Limitations");
-  sections.push("");
-  sections.push(a.limitations);
-  sections.push("");
+  if (a.limitations) {
+    sections.push("## Limitations");
+    sections.push("");
+    sections.push(a.limitations);
+    sections.push("");
+  }
 
   // Future Work
-  sections.push("## Future Work");
-  sections.push("");
-  sections.push(a.futureWork);
-  sections.push("");
+  if (a.futureWork) {
+    sections.push("## Future Work");
+    sections.push("");
+    sections.push(a.futureWork);
+    sections.push("");
+  }
 
   // Key Takeaways
   if (a.keyTakeaways.length > 0) {
@@ -148,10 +158,10 @@ export function analysisToDisplayMarkdown(analysis: PaperAnalysis): string {
   const sections: string[] = [];
 
   // Header with metadata
-  sections.push(`# ${metadata.title}`);
+  sections.push(`# ${metadata.title || "Untitled Paper"}`);
   sections.push("");
 
-  if (metadata.authors.length > 0) {
+  if (metadata.authors && metadata.authors.length > 0) {
     sections.push(`**Authors:** ${metadata.authors.join(", ")}`);
   }
   if (metadata.publishedDate) {
@@ -169,10 +179,12 @@ export function analysisToDisplayMarkdown(analysis: PaperAnalysis): string {
   sections.push("");
 
   // Problem Statement
-  sections.push("## Problem Statement");
-  sections.push("");
-  sections.push(a.problemStatement);
-  sections.push("");
+  if (a.problemStatement) {
+    sections.push("## Problem Statement");
+    sections.push("");
+    sections.push(a.problemStatement);
+    sections.push("");
+  }
 
   // Key Contributions
   if (a.keyContributions.length > 0) {
@@ -185,28 +197,36 @@ export function analysisToDisplayMarkdown(analysis: PaperAnalysis): string {
   }
 
   // Methodology
-  sections.push("## Methodology");
-  sections.push("");
-  sections.push(a.methodology);
-  sections.push("");
+  if (a.methodology) {
+    sections.push("## Methodology");
+    sections.push("");
+    sections.push(a.methodology);
+    sections.push("");
+  }
 
   // Results
-  sections.push("## Results");
-  sections.push("");
-  sections.push(a.results);
-  sections.push("");
+  if (a.results) {
+    sections.push("## Results");
+    sections.push("");
+    sections.push(a.results);
+    sections.push("");
+  }
 
   // Limitations
-  sections.push("## Limitations");
-  sections.push("");
-  sections.push(a.limitations);
-  sections.push("");
+  if (a.limitations) {
+    sections.push("## Limitations");
+    sections.push("");
+    sections.push(a.limitations);
+    sections.push("");
+  }
 
   // Future Work
-  sections.push("## Future Work");
-  sections.push("");
-  sections.push(a.futureWork);
-  sections.push("");
+  if (a.futureWork) {
+    sections.push("## Future Work");
+    sections.push("");
+    sections.push(a.futureWork);
+    sections.push("");
+  }
 
   // Key Takeaways
   if (a.keyTakeaways.length > 0) {

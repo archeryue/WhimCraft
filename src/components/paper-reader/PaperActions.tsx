@@ -25,9 +25,9 @@ function generateMarkdownForCopy(analysis: PaperAnalysis): string {
   const { metadata, analysis: a } = analysis;
   const sections: string[] = [];
 
-  sections.push(`# ${metadata.title}`, "");
+  sections.push(`# ${metadata.title || "Untitled Paper"}`, "");
 
-  if (metadata.authors.length > 0) {
+  if (metadata.authors && metadata.authors.length > 0) {
     sections.push(`**Authors:** ${metadata.authors.join(", ")}`);
   }
   if (metadata.publishedDate) {
@@ -39,7 +39,9 @@ function generateMarkdownForCopy(analysis: PaperAnalysis): string {
   sections.push("");
 
   sections.push("## Summary", "", a.summary, "");
-  sections.push("## Problem Statement", "", a.problemStatement, "");
+  if (a.problemStatement) {
+    sections.push("## Problem Statement", "", a.problemStatement, "");
+  }
 
   if (a.keyContributions.length > 0) {
     sections.push("## Key Contributions", "");
@@ -47,10 +49,18 @@ function generateMarkdownForCopy(analysis: PaperAnalysis): string {
     sections.push("");
   }
 
-  sections.push("## Methodology", "", a.methodology, "");
-  sections.push("## Results", "", a.results, "");
-  sections.push("## Limitations", "", a.limitations, "");
-  sections.push("## Future Work", "", a.futureWork, "");
+  if (a.methodology) {
+    sections.push("## Methodology", "", a.methodology, "");
+  }
+  if (a.results) {
+    sections.push("## Results", "", a.results, "");
+  }
+  if (a.limitations) {
+    sections.push("## Limitations", "", a.limitations, "");
+  }
+  if (a.futureWork) {
+    sections.push("## Future Work", "", a.futureWork, "");
+  }
 
   if (a.keyTakeaways.length > 0) {
     sections.push("## Key Takeaways", "");

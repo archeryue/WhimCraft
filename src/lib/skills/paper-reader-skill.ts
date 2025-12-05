@@ -18,6 +18,7 @@ import { SkillInput, SkillOutput, SkillFigure, SkillSection, SkillContext } from
 import { PdfFetchTool, PdfToolContext } from '@/lib/agent/tools/pdf-fetch';
 import { TextExtractTool } from '@/lib/agent/tools/text-extract';
 import { FigureExtractTool, ExtractedFigure } from '@/lib/agent/tools/figure-extract';
+import { resolveUrl } from '@/lib/paper-reader/url-resolver';
 
 // Lazy-initialized Gemini client
 let genaiClient: GoogleGenerativeAI | null = null;
@@ -74,6 +75,16 @@ export class PaperReaderSkill extends BaseSkill {
     console.log(`[PaperReaderSkill] Starting analysis for: ${url}`);
     console.log(`[PaperReaderSkill] User query: ${query}`);
 
+    // Resolve URL to get actual PDF URL (handles arXiv abstract URLs, etc.)
+    let pdfUrl: string;
+    try {
+      const resolved = await resolveUrl(url);
+      pdfUrl = resolved.pdfUrl;
+      console.log(`[PaperReaderSkill] Resolved PDF URL: ${pdfUrl}`);
+    } catch (error) {
+      return this.errorOutput(`Failed to resolve URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
     // Create extended context for PDF tools
     const pdfContext: PdfToolContext = {
       ...this.context,
@@ -84,7 +95,7 @@ export class PaperReaderSkill extends BaseSkill {
 
     // Step 1: Fetch PDF
     console.log('[PaperReaderSkill] Step 1: Fetching PDF...');
-    const fetchResult = await this.pdfFetchTool.execute({ url }, pdfContext);
+    const fetchResult = await this.pdfFetchTool.execute({ url: pdfUrl }, pdfContext);
     if (!fetchResult.success) {
       return this.errorOutput(`Failed to fetch PDF: ${fetchResult.error}`);
     }

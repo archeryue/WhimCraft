@@ -3,15 +3,13 @@
  *
  * POST /api/paper/analyze
  * Accepts a paper URL and returns analysis via SSE streaming.
+ * Uses the Paper Reader Agent with intelligent figure selection.
  */
 
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { resolveUrl } from "@/lib/paper-reader/url-resolver";
-import { fetchPdf } from "@/lib/paper-reader/pdf-fetcher";
-import { parsePdf } from "@/lib/paper-reader/pdf-parser";
-import { analyzePaper } from "@/lib/paper-reader/analyzer";
+import { paperReaderAgent, type ProgressEvent } from "@/lib/paper-reader/agent";
 import { AnalysisProgress, PaperAnalysis } from "@/lib/paper-reader/types";
 
 // Simple in-memory rate limiting for MVP
@@ -98,13 +96,10 @@ export async function POST(req: NextRequest) {
 
   // Create SSE stream
   const encoder = new TextEncoder();
-  let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
   let streamClosed = false;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      streamController = controller;
-
       // Helper to send progress events (checks if stream is still open)
       const sendProgress = (progress: AnalysisProgress) => {
         if (streamClosed) return;
@@ -117,110 +112,59 @@ export async function POST(req: NextRequest) {
         }
       };
 
+      // Map agent progress events to SSE progress format
+      const mapStage = (phase: ProgressEvent["phase"]): AnalysisProgress["stage"] => {
+        switch (phase) {
+          case "extraction": return "fetching";
+          case "analysis": return "analyzing";
+          case "synthesis": return "formatting";
+          case "complete": return "complete";
+          case "error": return "error";
+          default: return "analyzing";
+        }
+      };
+
       try {
-        const startTime = Date.now();
-        const logTiming = (stage: string) => {
-          console.log(`[Paper Analysis] ${stage}: ${Date.now() - startTime}ms`);
-        };
-
-        // Stage 1: Validating URL
-        sendProgress({
-          stage: "validating",
-          progress: 5,
-          message: "Validating paper URL...",
+        // Set up progress callback for the agent
+        paperReaderAgent.setProgressCallback((event: ProgressEvent) => {
+          sendProgress({
+            stage: mapStage(event.phase),
+            progress: event.progress,
+            message: event.message,
+          });
         });
 
-        const resolved = await resolveUrl(url);
-        logTiming("URL resolved");
+        // Execute the Paper Reader Agent
+        const result = await paperReaderAgent.analyze(url, undefined, userId);
 
-        sendProgress({
-          stage: "validating",
-          progress: 10,
-          message: `Detected ${resolved.type} paper`,
-        });
-
-        // Stage 2: Fetching PDF
-        sendProgress({
-          stage: "fetching",
-          progress: 15,
-          message: "Downloading PDF...",
-        });
-
-        const fetchResult = await fetchPdf(resolved.pdfUrl);
-        logTiming("PDF fetched");
-
-        sendProgress({
-          stage: "fetching",
-          progress: 30,
-          message: `Downloaded ${(fetchResult.contentLength / 1024).toFixed(0)} KB`,
-        });
-
-        // Stage 3: Parsing PDF
-        sendProgress({
-          stage: "parsing",
-          progress: 35,
-          message: "Extracting text from PDF...",
-        });
-
-        const parsed = await parsePdf(fetchResult.buffer);
-        logTiming("PDF parsed");
-        console.log(`[Paper Analysis] Text length: ${parsed.text.length} chars`);
-
-        sendProgress({
-          stage: "parsing",
-          progress: 45,
-          message: `Extracted ${parsed.pageCount} pages`,
-        });
-
-        // Stage 4: AI Analysis
-        sendProgress({
-          stage: "analyzing",
-          progress: 50,
-          message: "Analyzing paper with AI...",
-        });
-
-        // This is the slow part - update progress periodically
-        let analysis: PaperAnalysis;
-        try {
-          // Send a progress update while waiting
-          const analysisPromise = analyzePaper(parsed, resolved);
-
-          // Update progress while waiting
-          const progressInterval = setInterval(() => {
-            sendProgress({
-              stage: "analyzing",
-              progress: Math.min(90, 50 + Math.random() * 30),
-              message: "AI is reading and analyzing the paper...",
-            });
-          }, 3000);
-
-          analysis = await analysisPromise;
-          clearInterval(progressInterval);
-          logTiming("AI analysis complete");
-        } catch (error) {
-          throw new Error(
-            `Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
-          );
+        if (!result.success) {
+          throw new Error(result.error || "Analysis failed");
         }
 
-        sendProgress({
-          stage: "analyzing",
-          progress: 95,
-          message: "Analysis complete",
-        });
-
-        // Stage 5: Complete
-        sendProgress({
-          stage: "complete",
-          progress: 100,
-          message: "Paper analysis complete!",
-          result: analysis,
-        });
+        // Transform agent result to PaperAnalysis format
+        const analysis: PaperAnalysis = {
+          metadata: {
+            title: result.metadata.title,
+            sourceUrl: result.metadata.sourceUrl,
+            analyzedAt: result.metadata.analyzedAt,
+          },
+          analysis: {
+            summary: result.analysis.summary,
+            problemStatement: result.analysis.problemStatement,
+            keyContributions: result.analysis.keyContributions,
+            methodology: result.analysis.methodology,
+            results: result.analysis.results,
+            limitations: result.analysis.limitations,
+            futureWork: result.analysis.futureWork,
+            keyTakeaways: result.analysis.keyTakeaways,
+          },
+          figures: result.figures,
+        };
 
         // Increment rate limit after successful analysis
         incrementRateLimit(userId);
 
-        // Add remaining count info
+        // Send final completion event with result
         sendProgress({
           stage: "complete",
           progress: 100,
