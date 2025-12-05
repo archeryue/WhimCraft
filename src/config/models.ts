@@ -7,6 +7,7 @@
  * - Tier 3 (Lite): Gemini 2.5 Flash-Lite for background processing
  * - Tier 4 (PRO): Gemini 3.0 Pro for advanced reasoning (opt-in)
  * - Tier 5 (Image PRO): Gemini 3.0 Pro Image for high-quality image generation (opt-in)
+ * - Tier 6 (Reader): Gemini 2.5 Flash for document analysis (upgradeable to 2.5 Pro)
  *
  * Pricing (per 1M tokens):
  * - 2.5 Flash: $0.30 input / $2.50 output
@@ -18,6 +19,7 @@
  * Benefits:
  * - Cost-optimized defaults for daily use
  * - Advanced reasoning available on-demand
+ * - Long-context document analysis with READER tier
  * - Same knowledge cutoff (January 2025) across all tiers
  */
 
@@ -27,6 +29,7 @@ export enum ModelTier {
   LITE = "lite",          // Background processing
   PRO = "pro",            // Advanced reasoning (opt-in)
   IMAGE_PRO = "image_pro", // High-quality image generation (opt-in)
+  READER = "reader",       // Long-context document analysis (Paper Reader)
 }
 
 export const GEMINI_MODELS = {
@@ -35,6 +38,7 @@ export const GEMINI_MODELS = {
   [ModelTier.LITE]: "gemini-2.5-flash-lite",
   [ModelTier.PRO]: "gemini-3-pro-preview",
   [ModelTier.IMAGE_PRO]: "gemini-3-pro-image-preview",
+  [ModelTier.READER]: "gemini-2.5-flash",  // TODO: Consider gemini-2.5-pro for higher quality
 } as const;
 
 export const MODEL_CONFIGS = {
@@ -96,12 +100,23 @@ export const MODEL_CONFIGS = {
       image4K: 0.24,    // per 4K image output
     },
   },
+  [ModelTier.READER]: {
+    model: GEMINI_MODELS[ModelTier.READER],
+    description: "Document analysis (uses 2.5 Flash, upgradeable to 2.5 Pro)",
+    contextWindow: 1048576,        // 1M tokens
+    maxOutputTokens: 65536,        // 65K tokens
+    knowledgeCutoff: "January 2025",
+    pricing: {
+      input: 0.30,   // per 1M tokens (2.5 Flash pricing)
+      output: 2.50,  // per 1M tokens
+    },
+  },
 } as const;
 
 /**
  * Get the appropriate model for a specific task
  */
-export function getModelForTask(task: "chat" | "image" | "memory" | "analysis"): string {
+export function getModelForTask(task: "chat" | "image" | "memory" | "analysis" | "document"): string {
   switch (task) {
     case "chat":
       return GEMINI_MODELS[ModelTier.MAIN];
@@ -110,6 +125,8 @@ export function getModelForTask(task: "chat" | "image" | "memory" | "analysis"):
     case "memory":
     case "analysis":
       return GEMINI_MODELS[ModelTier.LITE];
+    case "document":
+      return GEMINI_MODELS[ModelTier.READER];
     default:
       return GEMINI_MODELS[ModelTier.MAIN];
   }
@@ -123,6 +140,7 @@ export function getModelTier(modelName: string): ModelTier {
   if (modelName.includes("3-pro")) return ModelTier.PRO;
   if (modelName.includes("lite")) return ModelTier.LITE;
   if (modelName.includes("image")) return ModelTier.IMAGE;
+  // READER tier uses same model as MAIN, distinguish by usage context
   return ModelTier.MAIN;
 }
 
