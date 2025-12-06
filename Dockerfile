@@ -37,8 +37,12 @@ WORKDIR /app
 ENV NODE_ENV production
 
 # Install Python3 and PyMuPDF for figure extraction
-RUN apk add --no-cache python3 py3-pip && \
-    pip3 install --no-cache-dir --break-system-packages pymupdf
+# PyMuPDF requires build tools to compile from source on Alpine
+RUN apk add --no-cache python3 py3-pip \
+    gcc g++ musl-dev python3-dev make swig && \
+    pip3 install --no-cache-dir --break-system-packages pymupdf && \
+    apk del gcc g++ python3-dev make swig && \
+    rm -rf /var/cache/apk/*
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
