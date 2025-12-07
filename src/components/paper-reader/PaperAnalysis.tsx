@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { PaperAnalysis as PaperAnalysisType } from "@/lib/paper-reader/types";
 import { cn } from "@/lib/utils";
 import {
@@ -16,6 +18,47 @@ import {
   Compass,
   Image as ImageIcon,
 } from "lucide-react";
+
+// Markdown content component with proper styling
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        // Style paragraphs
+        p: ({ children }) => (
+          <p className="text-slate-700 mb-2 last:mb-0">{children}</p>
+        ),
+        // Style bullet lists
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside space-y-1 text-slate-700 mb-2 last:mb-0">{children}</ul>
+        ),
+        // Style numbered lists
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside space-y-1 text-slate-700 mb-2 last:mb-0">{children}</ol>
+        ),
+        // Style list items
+        li: ({ children }) => (
+          <li className="text-slate-700">{children}</li>
+        ),
+        // Style bold text
+        strong: ({ children }) => (
+          <strong className="font-semibold text-slate-900">{children}</strong>
+        ),
+        // Style italic text
+        em: ({ children }) => (
+          <em className="italic">{children}</em>
+        ),
+        // Style inline code
+        code: ({ children }) => (
+          <code className="bg-slate-100 px-1 py-0.5 rounded text-sm font-mono text-slate-800">{children}</code>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 
 interface PaperAnalysisProps {
   analysis: PaperAnalysisType;
@@ -69,7 +112,7 @@ export function PaperAnalysisDisplay({ analysis, className }: PaperAnalysisProps
         <div className="divide-y divide-slate-100">
           {/* Summary */}
           <Section icon={Lightbulb} title="Summary" iconColor="text-yellow-600">
-            <p className="text-slate-700">{a.summary}</p>
+            <MarkdownContent content={a.summary} />
           </Section>
 
           {/* Key Figures */}
@@ -111,7 +154,7 @@ export function PaperAnalysisDisplay({ analysis, className }: PaperAnalysisProps
           {/* Problem Statement */}
           {a.problemStatement && (
             <Section icon={Target} title="Problem Statement" iconColor="text-red-600">
-              <p className="text-slate-700">{a.problemStatement}</p>
+              <MarkdownContent content={a.problemStatement} />
             </Section>
           )}
 
@@ -133,14 +176,14 @@ export function PaperAnalysisDisplay({ analysis, className }: PaperAnalysisProps
           {/* Methodology */}
           {a.methodology && (
             <Section icon={Beaker} title="Methodology" iconColor="text-purple-600">
-              <p className="text-slate-700">{a.methodology}</p>
+              <MarkdownContent content={a.methodology} />
             </Section>
           )}
 
           {/* Results */}
           {a.results && (
             <Section icon={BarChart} title="Results" iconColor="text-blue-600">
-              <p className="text-slate-700">{a.results}</p>
+              <MarkdownContent content={a.results} />
             </Section>
           )}
 
@@ -151,14 +194,14 @@ export function PaperAnalysisDisplay({ analysis, className }: PaperAnalysisProps
               title="Limitations"
               iconColor="text-orange-600"
             >
-              <p className="text-slate-700">{a.limitations}</p>
+              <MarkdownContent content={a.limitations} />
             </Section>
           )}
 
           {/* Future Work */}
           {a.futureWork && (
             <Section icon={Compass} title="Future Work" iconColor="text-teal-600">
-              <p className="text-slate-700">{a.futureWork}</p>
+              <MarkdownContent content={a.futureWork} />
             </Section>
           )}
 

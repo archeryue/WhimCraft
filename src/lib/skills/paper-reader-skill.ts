@@ -154,9 +154,27 @@ export class PaperReaderSkill extends BaseSkill {
     const keyFigures = this.selectKeyFigures(analyzedFigures, query, 3);
     console.log(`[PaperReaderSkill] Selected ${keyFigures.length} key figures`);
 
-    // Step 6: Generate paper analysis
-    console.log('[PaperReaderSkill] Step 5: Generating paper analysis...');
-    const analysis = await this.analyzePaper(textContent, query, keyFigures);
+    // Step 6: Generate paper analysis (with retry for JSON parse failures)
+    let analysis: { summary: string; sections: SkillSection[] } | null = null;
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log(`[PaperReaderSkill] Step 5: Generating paper analysis (attempt ${attempt}/${maxAttempts})...`);
+      analysis = await this.analyzePaper(textContent, query, keyFigures);
+      if (analysis) {
+        console.log('[PaperReaderSkill] Paper analysis generated successfully');
+        break;
+      }
+      console.log(`[PaperReaderSkill] Attempt ${attempt} failed (JSON parse error), ${attempt < maxAttempts ? 'retrying...' : 'using fallback'}`);
+    }
+
+    // Fallback if all attempts fail
+    if (!analysis) {
+      analysis = {
+        summary: 'Paper analysis completed. Please refer to the extracted figures and text for details.',
+        sections: [],
+      };
+    }
 
     return {
       success: true,
@@ -343,7 +361,7 @@ Return ONLY the JSON, no other text.`;
     textContent: string,
     userQuery: string,
     keyFigures: SkillFigure[]
-  ): Promise<{ summary: string; sections: SkillSection[] }> {
+  ): Promise<{ summary: string; sections: SkillSection[] } | null> {
     const genai = getGenaiClient();
     const model = genai.getGenerativeModel({ model: GEMINI_MODELS[ModelTier.LITE] });
 
@@ -399,11 +417,9 @@ IMPORTANT: All sections are REQUIRED. Return ONLY the JSON.`;
         sections: analysis.sections || [],
       };
     } catch (error) {
-      console.error('[PaperReaderSkill] Paper analysis failed:', error);
-      return {
-        summary: 'Paper analysis completed. Please refer to the extracted figures.',
-        sections: [],
-      };
+      console.error('[PaperReaderSkill] Paper analysis attempt failed:', error);
+      // Return null to signal retry is needed
+      return null;
     }
   }
 }
