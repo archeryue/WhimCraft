@@ -13,16 +13,10 @@ Build a clean, professional AI agent serving English and Chinese-speaking family
 npm run dev                    # Start dev server (port 8080)
 npm run build                  # Production build (strict TypeScript)
 npm run lint                   # ESLint checks
-
-# Testing (see docs/TESTING.md for complete guide)
-npx jest                       # Run all unit tests (307)
-npx jest --watch              # Watch mode for TDD
-npm run test:e2e:fast         # Run E2E tests (72 tests, ~2 min)
-npx playwright test --ui      # Interactive E2E test UI
-
-# Deployment (see docs/DEPLOYMENT.md for complete guide)
-# NEVER deploy unless user explicitly asks
+npx jest                       # Run unit tests (307)
 ```
+
+**For E2E testing and deployment, use Claude Code Skills** (see below).
 
 ## Git Workflow
 
@@ -106,20 +100,11 @@ Conversation → /save command → AI Title + JSON Blocks → Whim (TipTap Edito
 - Design test scenarios first
 
 **After Implementation:**
-```bash
-npm run build         # TypeScript check
-npx jest              # Unit tests (307)
-npm run test:e2e:fast # E2E tests (72 tests, 6 suites, ~2 min)
-```
+- **ALWAYS** run E2E tests to verify new features work
+- **ALWAYS** run E2E tests after bug fixes to confirm the fix
+- **NEVER** tell the user a feature is complete without running E2E tests first
 - **NEVER** commit until all tests pass (100% pass rate required)
-- **NEVER** skip E2E tests for user-facing features
-- **ALWAYS** add tests for new features
-
-**E2E Test Account:**
-- A test account exists for E2E testing that is whitelisted and can be used for authenticated API testing
-- Use Playwright E2E tests (`npm run test:e2e:fast`) which automatically handle authentication
-- For manual API testing, run the E2E tests or use the Playwright UI (`npx playwright test --ui`)
-- **ALWAYS** use E2E tests for testing authenticated features instead of trying to bypass auth with direct curl calls
+- Use the `e2e-test` skill for commands and debugging
 
 ### 3. ✅ VERIFICATION: Verify Before Reporting Success
 1. Make code changes
@@ -130,9 +115,7 @@ npm run test:e2e:fast # E2E tests (72 tests, 6 suites, ~2 min)
 
 ### 4. 🚀 DEPLOYMENT: Deploy Only When Asked
 - **NEVER** deploy unless user explicitly requests it
-- **ALWAYS** run `npm run build` and `npx jest` first
-- **ALWAYS** read `docs/DEPLOYMENT.md` for steps
-- Production URL: See `NEXT_PUBLIC_PRODUCTION_URL` in `.env.local`
+- Use the `ship` skill for deployment workflow and verification
 
 ### 5. 🤖 MODEL CONFIG: Never Change Without Permission
 - **NEVER** modify `src/config/models.ts` without explicit user request
@@ -227,7 +210,19 @@ src/
     feature-flags.ts              # Feature toggles
   __tests__/                      # Jest tests (307)
 e2e/                              # E2E tests (72 tests, 6 suites)
+.claude/skills/                   # Claude Code skills
 ```
+
+## Claude Code Skills
+
+Skills provide specialized workflows for common tasks. Invoke with `skill: "name"` or they auto-trigger on keywords.
+
+| Skill | Triggers | Description |
+|-------|----------|-------------|
+| `e2e-test` | "verify", "test the feature", "e2e", "playwright", "run tests" | Run Playwright E2E tests to verify features |
+| `ship` | "ship", "deploy", "push to production", "go live", "release" | Deploy to Google Cloud Run with verification |
+
+**Location**: `.claude/skills/<skill-name>/SKILL.md`
 
 ## Documentation
 
@@ -245,5 +240,5 @@ See `docs/README.md` for full index. Key docs:
 
 ---
 
-**Last Updated**: December 1, 2025
+**Last Updated**: December 8, 2025
 **Maintained By**: Archer & Claude Code
