@@ -125,6 +125,37 @@ export function ChatMessage({ message, userName, userAvatar, progressEvents: ext
               pre({ children, ...props }) {
                 return <CodeBlock>{children}</CodeBlock>;
               },
+              // Custom image component for generated images (from R2 URLs)
+              img({ src, alt, ...props }: any) {
+                if (alt === 'Generated Image' && src?.startsWith('https://')) {
+                  return (
+                    <div className="mt-4 relative inline-block not-prose">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={alt || 'Generated image'}
+                        className="rounded-lg max-w-full h-auto shadow-lg"
+                        style={{ maxHeight: '500px' }}
+                      />
+                      <a
+                        href={src}
+                        download={`generated-image-${Date.now()}.png`}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow-md transition-all hover:scale-110"
+                        title="Download image"
+                      >
+                        <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    </div>
+                  );
+                }
+                // Default image rendering for other images
+                return (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={src} alt={alt} className="rounded-lg max-w-full h-auto" {...props} />
+                );
+              },
             }}
           >
             {message.content}

@@ -99,3 +99,78 @@ export function generateImageKey(
   const random = Math.random().toString(36).substring(2, 8);
   return `${userId}/${source}/${timestamp}-${random}.${extension}`;
 }
+
+/**
+ * Result of persisting AI-generated images
+ */
+export interface PersistImageResult {
+  content: string;
+  imageUrls: string[];
+}
+
+/**
+ * Extract base64 images from markdown, upload to R2, and replace with URLs
+ *
+ * Finds patterns like: ![Generated Image](data:image/png;base64,...)
+ * Uploads to R2 and replaces with: ![Generated Image](https://r2-url/...)
+ */
+export async function persistGeneratedImages(
+  content: string,
+  userId: string
+): Promise<PersistImageResult> {
+  const imageUrls: string[] = [];
+
+  // Match markdown images with base64 data
+  const imageRegex = /!\[([^\]]*)\]\(data:(image\/([^;]+));base64,([A-Za-z0-9+/=\s]+?)\)/g;
+
+  // Find all matches first
+  const matches: Array<{
+    fullMatch: string;
+    altText: string;
+    mimeType: string;
+    extension: string;
+    base64Data: string;
+  }> = [];
+
+  let match;
+  while ((match = imageRegex.exec(content)) !== null) {
+    matches.push({
+      fullMatch: match[0],
+      altText: match[1],
+      mimeType: match[2],
+      extension: match[3] || 'png',
+      base64Data: match[4].replace(/\s/g, ''), // Remove any whitespace
+    });
+  }
+
+  if (matches.length === 0) {
+    return { content, imageUrls };
+  }
+
+  // Process each match
+  let modifiedContent = content;
+
+  for (const img of matches) {
+    try {
+      // Convert base64 to buffer
+      const buffer = Buffer.from(img.base64Data, 'base64');
+
+      // Generate key and upload
+      const key = generateImageKey(userId, 'ai-generated', img.extension);
+      const result = await uploadToR2(buffer, key, img.mimeType);
+
+      // Replace base64 with URL in content
+      const newMarkdown = `![${img.altText}](${result.url})`;
+      modifiedContent = modifiedContent.replace(img.fullMatch, newMarkdown);
+
+      imageUrls.push(result.url);
+
+      console.log(`[R2] Persisted AI-generated image: ${key} (${buffer.length} bytes)`);
+    } catch (error) {
+      console.error('[R2] Failed to persist AI-generated image:', error);
+      // Keep original base64 on failure (will be stripped later)
+    }
+  }
+
+  return { content: modifiedContent, imageUrls };
+}
