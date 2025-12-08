@@ -26,6 +26,7 @@ import { trimHistory } from "@/lib/providers/history-utils";
 import { Timestamp } from 'firebase-admin/firestore';
 import { Whim } from "@/types/whim";
 import { promptEnhancer } from "@/lib/image/prompt-enhancer";
+import { persistGeneratedImages } from "@/lib/storage/r2-client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     // Save user message
     // Store file metadata without base64 data to avoid Firestore size limits
-    // Fixed: Conditionally include thumbnail field to prevent undefined values
+    // Fixed: Conditionally include fields to prevent undefined values
     const fileMetadata = files?.map((file: FileAttachment) => {
       const metadata: Partial<FileAttachment> = {
         id: file.id,
@@ -94,6 +95,17 @@ export async function POST(req: NextRequest) {
         mimeType: file.mimeType,
         size: file.size,
       };
+
+      // Include R2 URLs if available (for image persistence)
+      if (file.url) {
+        metadata.url = file.url;
+      }
+      if (file.key) {
+        metadata.key = file.key;
+      }
+      if (file.thumbnailUrl) {
+        metadata.thumbnailUrl = file.thumbnailUrl;
+      }
 
       // Only include thumbnail if it exists (images have thumbnails, PDFs don't)
       if (file.thumbnail) {
@@ -490,20 +502,25 @@ export async function POST(req: NextRequest) {
             // Unsubscribe and cleanup
             progressUnsubscribe();
 
-            // Save assistant message WITHOUT image data (Firestore size limits)
-            // Strip image markdown before saving
-            const contentWithoutImage = fullResponse.replace(/!\[Generated Image\]\(data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+?\)/g, '[Image generated - not persisted to reduce storage]');
+            // Persist AI-generated images to R2 storage
+            let contentToSave = fullResponse;
+            try {
+              const { content: persistedContent, imageUrls } = await persistGeneratedImages(fullResponse, session.user.id);
+              if (imageUrls.length > 0) {
+                console.log(`[Chat API] Persisted ${imageUrls.length} AI-generated image(s) to R2`);
+                contentToSave = persistedContent;
+              }
+            } catch (error) {
+              console.error('[Chat API] Failed to persist images to R2, stripping base64:', error);
+              // Fall back to stripping images if R2 fails
+              contentToSave = fullResponse.replace(/!\[Generated Image\]\(data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+?\)/g, '[Image generated - storage unavailable]');
+            }
 
             const messageData: any = {
               role: "assistant",
-              content: contentWithoutImage,
+              content: contentToSave,
               created_at: new Date(),
             };
-
-            // Log if we stripped an image
-            if (fullResponse !== contentWithoutImage) {
-              console.log('[Chat API] Image markdown stripped from message before Firestore save (size limit)');
-            }
 
             await conversationRef.collection(COLLECTIONS.MESSAGES).add(messageData);
 
@@ -763,13 +780,22 @@ export async function POST(req: NextRequest) {
           // Unsubscribe from progress updates
           progressUnsubscribe();
 
-          // Save assistant message
-          // Strip base64 image data to avoid Firestore size limits (1MB max)
-          // Images will display during session but won't persist after reload
-          const contentToSave = fullResponse.replace(
-            /data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g,
-            'data:image/png;base64,[image-data-removed-due-to-size]'
-          );
+          // Persist AI-generated images to R2 storage
+          let contentToSave = fullResponse;
+          try {
+            const { content: persistedContent, imageUrls } = await persistGeneratedImages(fullResponse, session.user.id);
+            if (imageUrls.length > 0) {
+              console.log(`[Chat API] Persisted ${imageUrls.length} AI-generated image(s) to R2`);
+              contentToSave = persistedContent;
+            }
+          } catch (error) {
+            console.error('[Chat API] Failed to persist images to R2, stripping base64:', error);
+            // Fall back to stripping images if R2 fails
+            contentToSave = fullResponse.replace(
+              /!\[Generated Image\]\(data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+?\)/g,
+              '[Image generated - storage unavailable]'
+            );
+          }
 
           await conversationRef.collection(COLLECTIONS.MESSAGES).add({
             role: "assistant",

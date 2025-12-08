@@ -20,11 +20,11 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
         >
           {/* File Icon */}
           <div className="flex-shrink-0">
-            {file.type === FileType.IMAGE && file.thumbnail ? (
+            {file.type === FileType.IMAGE && (file.thumbnailUrl || file.thumbnail) ? (
               <div className="w-10 h-10 rounded overflow-hidden bg-slate-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={file.thumbnail}
+                  src={file.thumbnailUrl || file.thumbnail}
                   alt={file.name}
                   className="w-full h-full object-cover"
                 />

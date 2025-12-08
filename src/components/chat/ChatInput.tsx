@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Plus, Loader2 } from "lucide-react";
+import { Send, Plus, Loader2, Upload } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import {
   FileAttachment,
@@ -12,6 +12,35 @@ import {
   fileToBase64,
   createImageThumbnail,
 } from "@/types/file";
+
+interface UploadResponse {
+  success: boolean;
+  url: string;
+  thumbnailUrl: string;
+  key: string;
+  thumbnailKey: string;
+  width: number;
+  height: number;
+  size: number;
+}
+
+async function uploadImageToR2(file: File): Promise<UploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("source", "chat");
+
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Upload failed");
+  }
+
+  return response.json();
+}
 
 interface ChatInputProps {
   onSendMessage: (message: string, files?: FileAttachment[]) => void;
@@ -70,18 +99,8 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           continue;
         }
 
-        // Convert to base64
+        // Convert to base64 (needed for AI processing)
         const base64Data = await fileToBase64(file);
-
-        // Create thumbnail for images
-        let thumbnail: string | undefined;
-        if (fileType === FileType.IMAGE) {
-          try {
-            thumbnail = await createImageThumbnail(file);
-          } catch (error) {
-            console.error("Failed to create thumbnail:", error);
-          }
-        }
 
         // Create file attachment
         const attachment: FileAttachment = {
@@ -91,8 +110,30 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           mimeType: file.type,
           size: file.size,
           data: base64Data,
-          thumbnail,
         };
+
+        // For images: upload to R2 for persistence
+        if (fileType === FileType.IMAGE) {
+          try {
+            // Create local thumbnail for immediate preview
+            attachment.thumbnail = await createImageThumbnail(file);
+
+            // Upload to R2 in background
+            const uploadResult = await uploadImageToR2(file);
+            attachment.url = uploadResult.url;
+            attachment.key = uploadResult.key;
+            attachment.thumbnailUrl = uploadResult.thumbnailUrl;
+          } catch (error) {
+            console.error("Failed to upload to R2:", error);
+            // Continue without R2 URL - image will still work via base64
+            // but won't persist after session
+            try {
+              attachment.thumbnail = await createImageThumbnail(file);
+            } catch (thumbError) {
+              console.error("Failed to create thumbnail:", thumbError);
+            }
+          }
+        }
 
         newFiles.push(attachment);
       }

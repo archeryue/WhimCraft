@@ -207,11 +207,7 @@ if (
 1. **Configure Test Environment**
 
 ```bash
-# Copy example file
-cp .env.test.example .env.development.local
-
-# Set required variables
-NODE_ENV=development
+# Add these variables to your .env.local
 ENABLE_TEST_AUTH=true
 TEST_USER_ID=test-user-123
 TEST_USER_EMAIL=test@example.com
@@ -270,7 +266,6 @@ e2e/
     user.json                      # Generated auth state (gitignored)
   auth.setup.ts                    # Authentication setup
 
-.env.test.example          # Template for test config
 scripts/
   add-test-user-to-whitelist.ts  # Firestore setup script
 
@@ -505,7 +500,7 @@ See `docs/TEST_SPEED_FINAL_SUMMARY.md` for detailed optimization analysis.
 
 ### Secrets Management
 
-- Never commit `.env.test` (gitignored)
+- Never commit `.env.local` (gitignored)
 - Use environment variables in CI/CD
 - Rotate credentials if accidentally exposed
 - Test credentials separate from production
@@ -549,7 +544,7 @@ See `docs/TEST_SPEED_FINAL_SUMMARY.md` for detailed optimization analysis.
 ### Related Files
 - `playwright.config.ts` - Playwright configuration
 - `jest.config.js` - Jest configuration
-- `.env.test.example` - Test environment template
+- `.env.local.example` - Environment template
 
 ---
 

@@ -20,6 +20,9 @@ const TEST_ARXIV_URL = 'https://arxiv.org/abs/1706.03762';
 // Environment flag to skip slow tests
 const SKIP_SLOW_TESTS = process.env.SKIP_SLOW_TESTS === 'true';
 
+// Mock figure for testing (small 1x1 red pixel PNG in base64)
+const MOCK_FIGURE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
+
 // Mock analysis result for fast tests
 const MOCK_ANALYSIS = {
   metadata: {
@@ -40,6 +43,24 @@ const MOCK_ANALYSIS = {
     futureWork: 'Apply to other domains.',
     keyTakeaways: ['Attention replaces recurrence', 'Better parallelization'],
   },
+  figures: [
+    {
+      id: 'fig-1',
+      page: 3,
+      imageBase64: MOCK_FIGURE_BASE64,
+      caption: 'The Transformer architecture',
+      importance: 85,
+      importanceReason: 'Core architecture diagram showing the model structure',
+    },
+    {
+      id: 'fig-2',
+      page: 5,
+      imageBase64: MOCK_FIGURE_BASE64,
+      caption: 'Multi-head attention mechanism',
+      importance: 75,
+      importanceReason: 'Illustrates the key innovation of multi-head attention',
+    },
+  ],
 };
 
 // Helper to create mock SSE response
@@ -231,6 +252,17 @@ test.describe('Paper Reader - Analysis Flow', () => {
     await expect(page.locator('text=Problem Statement')).toBeVisible();
     await expect(page.locator('text=Key Contributions')).toBeVisible();
     await expect(page.locator('text=Methodology')).toBeVisible();
+
+    // Verify figures section is present (mock includes 2 figures)
+    await expect(page.locator('text=Key Figures')).toBeVisible();
+
+    // Verify figure images are displayed
+    const figureImages = page.locator('[data-testid="paper-analysis"] img');
+    await expect(figureImages).toHaveCount(2);
+
+    // Verify figure importance scores are displayed
+    await expect(page.locator('text=Importance: 85/100')).toBeVisible();
+    await expect(page.locator('text=Importance: 75/100')).toBeVisible();
   });
 
   // SLOW TEST: Full analysis with real API takes 2-3 minutes
@@ -313,6 +345,30 @@ test.describe('Paper Reader - Actions (with mock)', () => {
     // Should return to input state
     await expect(page.locator('input[placeholder*="arxiv"]')).toBeVisible();
     await expect(page.locator('text=Analyze Academic Papers')).toBeVisible();
+  });
+
+  test('should save analysis as Whim successfully', async ({ page }) => {
+    // Mock the save-whim API
+    await page.route('**/api/paper/save-whim', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          whim: {
+            id: 'test-whim-123',
+            title: 'Attention Is All You Need',
+          },
+        }),
+      });
+    });
+
+    // Click Save as Whim button
+    const saveButton = page.locator('button:has-text("Save as Whim")');
+    await saveButton.click();
+
+    // Should navigate to whim page with the new whim ID
+    await page.waitForURL(/\/whim\?id=test-whim-123/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/whim\?id=test-whim-123/);
   });
 });
 

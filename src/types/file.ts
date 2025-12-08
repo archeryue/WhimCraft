@@ -16,8 +16,10 @@ export interface FileAttachment {
   mimeType: string;
   size: number; // bytes
   data: string; // base64 encoded data
-  url?: string; // optional public URL if stored
-  thumbnail?: string; // base64 thumbnail for images
+  url?: string; // R2 public URL for persistence
+  key?: string; // R2 object key for deletion
+  thumbnailUrl?: string; // R2 thumbnail URL
+  thumbnail?: string; // base64 thumbnail for images (legacy/fallback)
 }
 
 export interface FileUploadConfig {

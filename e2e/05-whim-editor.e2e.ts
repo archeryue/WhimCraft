@@ -114,38 +114,7 @@ test.describe('WhimEditor - Phase 1 Features (No Auth Required)', () => {
   });
 
   // Table insertion test removed - feature not implemented yet
-
-  test('should insert image', async ({ page }) => {
-    // Find the image button
-    const imageButton = page.locator('button[title="Insert Image"]');
-    await expect(imageButton).toBeVisible({ timeout: 5000 });
-
-    // Mock the prompt - accept with any URL
-    const testImageUrl = 'https://via.placeholder.com/150';
-    page.once('dialog', async (dialog) => {
-      expect(dialog.type()).toBe('prompt');
-      await dialog.accept(testImageUrl);
-    });
-
-    // Click the image button
-    await imageButton.click();
-
-    // Wait for image to be inserted
-    await page.waitForTimeout(1000);
-
-    // Check if image element exists (excluding ProseMirror-separator)
-    const image = page.locator('.ProseMirror img[src]');
-    const count = await image.count();
-
-    // Verify image was inserted (actual src may differ from input - editor might use placeholder)
-    expect(count).toBeGreaterThan(0);
-
-    const src = await image.first().getAttribute('src');
-    console.log(`✅ Image working! Inserted with src: ${src}`);
-
-    // Just verify we have a valid image src (data URL or http URL)
-    expect(src).toMatch(/^(data:image\/|https?:\/\/)/);
-  });
+  // Image upload test moved to e2e/09-image-upload.e2e.ts with proper test image generation
 
   test('should have code block with syntax highlighting', async ({ page }) => {
     // Find the code block button

@@ -1,6 +1,17 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { JSONContent } from '@tiptap/core';
 
+// Whim metadata for different source types
+export interface WhimMetadata {
+  type: 'paper-analysis' | 'conversation' | 'manual';
+  // Paper analysis specific
+  sourceUrl?: string;
+  arxivId?: string;
+  authors?: string[];
+  publishedDate?: string;
+  analyzedAt?: string;
+}
+
 // Server-side types (with Firestore Timestamps)
 export interface Whim {
   id: string;
@@ -11,6 +22,7 @@ export interface Whim {
   folderId?: string;
   isFavorite?: boolean; // Whether this whim is marked as favorite
   conversationId?: string; // Optional reference to source conversation
+  metadata?: WhimMetadata; // Source metadata (paper analysis, etc.)
   createdAt: Timestamp | string; // Timestamp on server, string on client
   updatedAt: Timestamp | string; // Timestamp on server, string on client
 }
@@ -32,6 +44,7 @@ export interface WhimClient {
   folderId?: string;
   isFavorite?: boolean; // Whether this whim is marked as favorite
   conversationId?: string;
+  metadata?: WhimMetadata; // Source metadata (paper analysis, etc.)
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }

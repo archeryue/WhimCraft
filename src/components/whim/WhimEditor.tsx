@@ -17,9 +17,28 @@ import { common, createLowlight } from 'lowlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { WhimClient, FolderClient } from '@/types/whim';
 import { JSONContent } from '@tiptap/core';
-import { MoreVertical, Trash2, Star } from 'lucide-react';
+import { MoreVertical, Trash2, Star, Loader2 } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
+
+// Upload image to R2
+async function uploadImageToR2(file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('source', 'whim');
+
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Upload failed');
+  }
+
+  return response.json();
+}
 
 // Initialize lowlight with common languages
 const lowlight = createLowlight(common);
@@ -80,10 +99,12 @@ export function WhimEditor({
   const [showDropdown, setShowDropdown] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showListMenu, setShowListMenu] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Refs for click-outside detection
+  // Refs for click-outside detection and file input
   const headingMenuRef = useRef<HTMLDivElement>(null);
   const listMenuRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Get initial content from blocks (all whims have been migrated)
   const getInitialContent = (): JSONContent => {
@@ -139,6 +160,22 @@ export function WhimEditor({
         class: 'prose prose-sm prose-slate max-w-none focus:outline-none px-8 leading-relaxed',
       },
       handlePaste: (view, event) => {
+        // Check for image paste first
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].type.startsWith('image/')) {
+              event.preventDefault();
+              const file = items[i].getAsFile();
+              if (file) {
+                // Trigger image upload (handled via window event)
+                window.dispatchEvent(new CustomEvent('whim-paste-image', { detail: { file } }));
+              }
+              return true;
+            }
+          }
+        }
+
         const text = event.clipboardData?.getData('text/plain');
         if (!text) return false;
 
@@ -167,6 +204,17 @@ export function WhimEditor({
           }
         }
 
+        return false;
+      },
+      handleDrop: (view, event) => {
+        // Check for image drop
+        const files = event.dataTransfer?.files;
+        if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+          event.preventDefault();
+          // Trigger image upload (handled via window event)
+          window.dispatchEvent(new CustomEvent('whim-drop-image', { detail: { file: files[0] } }));
+          return true;
+        }
         return false;
       },
     },
@@ -256,6 +304,43 @@ export function WhimEditor({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showHeadingMenu, showListMenu]);
+
+  // Handle image upload and insert into editor
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!editor || !file.type.startsWith('image/')) return;
+
+    setIsUploadingImage(true);
+    try {
+      const result = await uploadImageToR2(file);
+      editor.chain().focus().setImage({ src: result.url }).run();
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, [editor]);
+
+  // Listen for paste and drop events from editor
+  useEffect(() => {
+    const handlePasteImage = (event: Event) => {
+      const customEvent = event as CustomEvent<{ file: File }>;
+      handleImageUpload(customEvent.detail.file);
+    };
+
+    const handleDropImage = (event: Event) => {
+      const customEvent = event as CustomEvent<{ file: File }>;
+      handleImageUpload(customEvent.detail.file);
+    };
+
+    window.addEventListener('whim-paste-image', handlePasteImage);
+    window.addEventListener('whim-drop-image', handleDropImage);
+
+    return () => {
+      window.removeEventListener('whim-paste-image', handlePasteImage);
+      window.removeEventListener('whim-drop-image', handleDropImage);
+    };
+  }, [handleImageUpload]);
 
   const handleSave = useCallback(
     async (newTitle: string, newContentJSON: JSONContent, newFolderId: string): Promise<boolean> => {
@@ -803,24 +888,38 @@ export function WhimEditor({
             </button>
 
             {/* Insert Image */}
-            <button
-              onClick={() => {
-                const url = window.prompt('Enter image URL:');
-                if (url) {
-                  editor.chain().focus().setImage({ src: url }).run();
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleImageUpload(file);
                 }
+                // Reset input so same file can be selected again
+                e.target.value = '';
               }}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Insert Image"
+            />
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isUploadingImage}
+              className="p-2 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+              title="Insert Image (or paste/drop)"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+              {isUploadingImage ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              )}
             </button>
 
             {/* Insert Math (inline) */}

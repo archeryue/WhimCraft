@@ -6,9 +6,21 @@
 
 import { generateJSON } from "@tiptap/html/server";
 import StarterKit from "@tiptap/starter-kit";
+import { Image } from "@tiptap/extension-image";
 import { marked } from "marked";
 import { JSONContent } from "@tiptap/core";
-import { PaperAnalysis, PaperWhimData } from "./types";
+import { PaperAnalysis, PaperWhimData, PaperFigure } from "./types";
+
+/**
+ * Figure with persisted URL (instead of base64)
+ */
+export interface PersistedFigure {
+  id: string;
+  url: string;
+  caption?: string;
+  importance: number;
+  importanceReason?: string;
+}
 
 // Configure marked options
 marked.setOptions({
@@ -18,9 +30,14 @@ marked.setOptions({
 
 /**
  * Convert paper analysis to Whim-compatible format
+ * @param analysis - The paper analysis data
+ * @param persistedFigures - Optional figures with R2 URLs (if figures were uploaded)
  */
-export function analysisToWhimData(analysis: PaperAnalysis): PaperWhimData {
-  const markdown = analysisToMarkdown(analysis);
+export function analysisToWhimData(
+  analysis: PaperAnalysis,
+  persistedFigures?: PersistedFigure[]
+): PaperWhimData {
+  const markdown = analysisToMarkdown(analysis, persistedFigures);
   const blocks = markdownToBlocks(markdown);
 
   return {
@@ -39,8 +56,13 @@ export function analysisToWhimData(analysis: PaperAnalysis): PaperWhimData {
 
 /**
  * Convert paper analysis to markdown format
+ * @param analysis - The paper analysis data
+ * @param persistedFigures - Optional figures with R2 URLs
  */
-export function analysisToMarkdown(analysis: PaperAnalysis): string {
+export function analysisToMarkdown(
+  analysis: PaperAnalysis,
+  persistedFigures?: PersistedFigure[]
+): string {
   const { metadata, analysis: a } = analysis;
 
   const sections: string[] = [];
@@ -126,6 +148,21 @@ export function analysisToMarkdown(analysis: PaperAnalysis): string {
     sections.push("");
   }
 
+  // Figures section (with R2 URLs)
+  if (persistedFigures && persistedFigures.length > 0) {
+    sections.push("## Key Figures");
+    sections.push("");
+    for (const figure of persistedFigures) {
+      const caption = figure.caption || `Figure ${figure.id}`;
+      sections.push(`![${caption}](${figure.url})`);
+      sections.push("");
+      if (figure.importanceReason) {
+        sections.push(`*${figure.importanceReason}*`);
+        sections.push("");
+      }
+    }
+  }
+
   // My Notes section (empty for user to fill)
   sections.push("## My Notes");
   sections.push("");
@@ -142,8 +179,8 @@ function markdownToBlocks(markdown: string): JSONContent {
   // Convert markdown to HTML
   const html = marked.parse(markdown) as string;
 
-  // Parse HTML to TipTap JSON using StarterKit extensions
-  const json = generateJSON(html, [StarterKit]);
+  // Parse HTML to TipTap JSON using StarterKit + Image extensions
+  const json = generateJSON(html, [StarterKit, Image]);
 
   return json;
 }
