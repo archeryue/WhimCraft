@@ -227,7 +227,19 @@ src/
     feature-flags.ts              # Feature toggles
   __tests__/                      # Jest tests (307)
 e2e/                              # E2E tests (72 tests, 6 suites)
+.claude/skills/                   # Claude Code skills
 ```
+
+## Claude Code Skills
+
+Skills provide specialized workflows for common tasks. Invoke with `skill: "name"` or they auto-trigger on keywords.
+
+| Skill | Triggers | Description |
+|-------|----------|-------------|
+| `e2e-test` | "verify", "test the feature", "e2e", "playwright", "run tests" | Run Playwright E2E tests to verify features |
+| `ship` | "ship", "deploy", "push to production", "go live", "release" | Deploy to Google Cloud Run with verification |
+
+**Location**: `.claude/skills/<skill-name>/SKILL.md`
 
 ## Documentation
 
@@ -245,5 +257,5 @@ See `docs/README.md` for full index. Key docs:
 
 ---
 
-**Last Updated**: December 1, 2025
+**Last Updated**: December 8, 2025
 **Maintained By**: Archer & Claude Code
