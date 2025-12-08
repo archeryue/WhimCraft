@@ -84,6 +84,60 @@ gcloud builds submit --config cloudbuild.yaml --project=archerchat-3d462 --subst
 - `✓ Build successful`
 - `Service [archerchat] revision [archerchat-xxxxx] has been deployed`
 
+## Environment Variable Verification (REQUIRED)
+
+Before deploying, verify all required environment variables are configured in Cloud Run.
+
+### 1. Read Required Variables from `.env.local.example`
+
+```bash
+# Extract env var names from .env.local.example (excluding comments and empty lines)
+grep -E '^[A-Z_]+=.*' .env.local.example | cut -d'=' -f1
+```
+
+### 2. Get Currently Configured Variables in Cloud Run
+
+```bash
+gcloud run services describe archerchat \
+  --region us-central1 \
+  --project archerchat-3d462 \
+  --format="value(spec.template.spec.containers[0].env.name)"
+```
+
+### 3. Compare and Identify Missing Variables
+
+Compare the two lists. Any variable in `.env.local.example` that is NOT in Cloud Run needs to be added.
+
+**Required variables** (non-optional):
+- `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GEMINI_API_KEY`
+- `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`
+- `ADMIN_EMAIL`
+
+**Feature variables** (add if features are enabled):
+- Web search: `GOOGLE_SEARCH_API_KEY`, `GOOGLE_SEARCH_ENGINE_ID`, `JINA_API_KEY`
+- R2 storage: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
+
+### 4. Add Missing Variables
+
+If any required variables are missing, read their values from `.env.local` and add them:
+
+```bash
+# Read value from .env.local
+VALUE=$(grep '^VARIABLE_NAME=' .env.local | cut -d'=' -f2-)
+
+# Add to Cloud Run
+gcloud run services update archerchat \
+  --region us-central1 \
+  --project archerchat-3d462 \
+  --update-env-vars "VARIABLE_NAME=$VALUE"
+```
+
+**⚠️ SECURITY**: Never log or display the actual secret values. Only confirm that variables were added.
+
+---
+
 ## Post-Deployment Verification (ALWAYS DO THIS)
 
 ### ⚠️ Important: Wait for Revision to Appear
