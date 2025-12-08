@@ -1,9 +1,8 @@
-# Use Node.js 20 Alpine as base image
-FROM node:20-alpine AS base
+# Use Node.js 20 Slim (Debian-based) for pre-built PyMuPDF wheels
+FROM node:20-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
@@ -37,12 +36,11 @@ WORKDIR /app
 ENV NODE_ENV production
 
 # Install Python3 and PyMuPDF for figure extraction
-# PyMuPDF requires build tools to compile from source on Alpine
-RUN apk add --no-cache python3 py3-pip \
-    gcc g++ musl-dev python3-dev make swig && \
+# Debian has pre-built wheels so no compilation needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip && \
     pip3 install --no-cache-dir --break-system-packages pymupdf && \
-    apk del gcc g++ python3-dev make swig && \
-    rm -rf /var/cache/apk/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
