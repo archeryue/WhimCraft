@@ -220,6 +220,7 @@ Skills provide specialized workflows for common tasks. Invoke with `skill: "name
 | Skill | Triggers | Description |
 |-------|----------|-------------|
 | `e2e-test` | "verify", "test the feature", "e2e", "playwright", "run tests" | Run Playwright E2E tests to verify features |
+| `push` | "push", "merge to main", "update main", "sync main" | Push develop, rebase onto main, create PR and merge |
 | `ship` | "ship", "deploy", "push to production", "go live", "release" | Deploy to Google Cloud Run with verification |
 
 **Location**: `.claude/skills/<skill-name>/SKILL.md`
