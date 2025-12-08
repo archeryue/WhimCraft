@@ -114,6 +114,36 @@ export interface PersistImageResult {
  * Finds patterns like: ![Generated Image](data:image/png;base64,...)
  * Uploads to R2 and replaces with: ![Generated Image](https://r2-url/...)
  */
+/**
+ * Upload a paper figure to R2 and return the URL
+ */
+export async function uploadPaperFigure(
+  base64Data: string,
+  userId: string,
+  figureId: string
+): Promise<string> {
+  // Extract mime type from base64 if present, default to png
+  let mimeType = 'image/png';
+  let imageData = base64Data;
+
+  if (base64Data.includes(',')) {
+    const match = base64Data.match(/^data:(image\/[^;]+);base64,(.+)$/);
+    if (match) {
+      mimeType = match[1];
+      imageData = match[2];
+    }
+  }
+
+  const extension = mimeType.split('/')[1] || 'png';
+  const buffer = Buffer.from(imageData, 'base64');
+  const key = generateImageKey(userId, 'ai-generated', extension);
+
+  const result = await uploadToR2(buffer, key, mimeType);
+  console.log(`[R2] Persisted paper figure ${figureId}: ${key} (${buffer.length} bytes)`);
+
+  return result.url;
+}
+
 export async function persistGeneratedImages(
   content: string,
   userId: string
