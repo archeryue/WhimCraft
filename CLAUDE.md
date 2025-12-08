@@ -94,12 +94,17 @@ Conversation → /save command → AI Title + JSON Blocks → Whim (TipTap Edito
 - **ALWAYS** use environment variables for sensitive config
 - **ALWAYS** use Firebase Admin SDK server-side only
 
-### 2. 🧪 TESTING: Always Verify With E2E Tests
-- **ALWAYS** run E2E tests after implementing new features to verify they work
-- **ALWAYS** run E2E tests after fixing bugs to confirm the fix
+### 2. 🧪 TESTING: Test-Driven Development
+**Before Implementation:**
+- Think: How will I test this feature?
+- Design test scenarios first
+
+**After Implementation:**
+- **ALWAYS** run E2E tests to verify new features work
+- **ALWAYS** run E2E tests after bug fixes to confirm the fix
 - **NEVER** tell the user a feature is complete without running E2E tests first
 - **NEVER** commit until all tests pass (100% pass rate required)
-- Use the `e2e-test` skill for test commands and debugging guidance
+- Use the `e2e-test` skill for commands and debugging
 
 ### 3. ✅ VERIFICATION: Verify Before Reporting Success
 1. Make code changes
