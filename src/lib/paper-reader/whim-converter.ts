@@ -6,6 +6,7 @@
 
 import { generateJSON } from "@tiptap/html/server";
 import StarterKit from "@tiptap/starter-kit";
+import { Image } from "@tiptap/extension-image";
 import { marked } from "marked";
 import { JSONContent } from "@tiptap/core";
 import { PaperAnalysis, PaperWhimData, PaperFigure } from "./types";
@@ -178,8 +179,8 @@ function markdownToBlocks(markdown: string): JSONContent {
   // Convert markdown to HTML
   const html = marked.parse(markdown) as string;
 
-  // Parse HTML to TipTap JSON using StarterKit extensions
-  const json = generateJSON(html, [StarterKit]);
+  // Parse HTML to TipTap JSON using StarterKit + Image extensions
+  const json = generateJSON(html, [StarterKit, Image]);
 
   return json;
 }

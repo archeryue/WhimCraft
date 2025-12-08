@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { analysisToWhimData, PersistedFigure } from "@/lib/paper-reader/whim-converter";
 import { PaperAnalysis } from "@/lib/paper-reader/types";
 import { uploadPaperFigure } from "@/lib/storage/r2-client";
@@ -33,15 +34,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload figures to R2 if present
+    // Note: Figures are already filtered by the paper-reader-skill (importance >= 40)
+    // so we save ALL figures that were shown in the analysis result
     let persistedFigures: PersistedFigure[] = [];
     if (analysis.figures && analysis.figures.length > 0) {
       console.log(`[Save Whim] Uploading ${analysis.figures.length} figures to R2...`);
 
-      // Only upload high-importance figures (importance >= 0.6)
-      const importantFigures = analysis.figures.filter(f => f.importance >= 0.6);
-      console.log(`[Save Whim] ${importantFigures.length} figures meet importance threshold`);
-
-      for (const figure of importantFigures) {
+      for (const figure of analysis.figures) {
         try {
           const url = await uploadPaperFigure(
             figure.imageBase64,
@@ -66,13 +65,23 @@ export async function POST(req: NextRequest) {
     // Convert to whim data (with persisted figures)
     const whimData = analysisToWhimData(analysis, persistedFigures);
 
+    // Filter out undefined values from metadata (Firestore doesn't accept undefined)
+    const cleanMetadata: Record<string, unknown> = {};
+    if (whimData.metadata) {
+      for (const [key, value] of Object.entries(whimData.metadata)) {
+        if (value !== undefined) {
+          cleanMetadata[key] = value;
+        }
+      }
+    }
+
     // Save to Firestore
-    const now = new Date().toISOString();
+    const now = Timestamp.now();
     const whimRef = await db.collection("whims").add({
       userId: session.user.id,
       title: whimData.title,
       blocks: whimData.blocks,
-      metadata: whimData.metadata,
+      metadata: cleanMetadata,
       createdAt: now,
       updatedAt: now,
     });
