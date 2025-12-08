@@ -139,11 +139,11 @@ export function ChatMessage({ message, userName, userAvatar, progressEvents: ext
                   className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 max-w-xs"
                 >
                   {/* File Icon/Thumbnail */}
-                  {file.type === FileType.IMAGE && file.thumbnail ? (
+                  {file.type === FileType.IMAGE && (file.thumbnailUrl || file.url || file.thumbnail) ? (
                     <div className="w-10 h-10 rounded overflow-hidden bg-slate-200 flex-shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={file.thumbnail}
+                        src={file.thumbnailUrl || file.url || file.thumbnail}
                         alt={file.name}
                         className="w-full h-full object-cover"
                       />

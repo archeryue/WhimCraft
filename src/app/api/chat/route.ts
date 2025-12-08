@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     // Save user message
     // Store file metadata without base64 data to avoid Firestore size limits
-    // Fixed: Conditionally include thumbnail field to prevent undefined values
+    // Fixed: Conditionally include fields to prevent undefined values
     const fileMetadata = files?.map((file: FileAttachment) => {
       const metadata: Partial<FileAttachment> = {
         id: file.id,
@@ -94,6 +94,17 @@ export async function POST(req: NextRequest) {
         mimeType: file.mimeType,
         size: file.size,
       };
+
+      // Include R2 URLs if available (for image persistence)
+      if (file.url) {
+        metadata.url = file.url;
+      }
+      if (file.key) {
+        metadata.key = file.key;
+      }
+      if (file.thumbnailUrl) {
+        metadata.thumbnailUrl = file.thumbnailUrl;
+      }
 
       // Only include thumbnail if it exists (images have thumbnails, PDFs don't)
       if (file.thumbnail) {
