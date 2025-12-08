@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { WhimClient, FolderClient } from '@/types/whim';
 import { WhimEditor } from '@/components/whim/WhimEditor';
 import { WhimSidebar } from '@/components/whim/WhimSidebar';
 import { AIChatSidebar } from '@/components/whim/AIChatSidebar';
 
-export default function WhimPage() {
+function WhimPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const whimIdFromUrl = searchParams.get('id');
   const [whims, setWhims] = useState<WhimClient[]>([]);
   const [folders, setFolders] = useState<FolderClient[]>([]);
   const [selectedWhim, setSelectedWhim] = useState<WhimClient | null>(null);
@@ -53,6 +55,16 @@ export default function WhimPage() {
 
       setWhims(whimsData.whims);
       setFolders(foldersData.folders);
+
+      // Auto-select whim from URL param
+      if (whimIdFromUrl) {
+        const whimFromUrl = whimsData.whims.find((w: WhimClient) => w.id === whimIdFromUrl);
+        if (whimFromUrl) {
+          setSelectedWhim(whimFromUrl);
+          // Clear the URL param after selecting
+          router.replace('/whim', { scroll: false });
+        }
+      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load whims and folders');
@@ -320,5 +332,18 @@ export default function WhimPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Wrap with Suspense for useSearchParams
+export default function WhimPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-slate-500">Loading...</div>
+      </div>
+    }>
+      <WhimPageContent />
+    </Suspense>
   );
 }

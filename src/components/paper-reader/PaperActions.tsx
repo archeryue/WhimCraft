@@ -94,7 +94,7 @@ export function PaperActions({ analysis, onAnalyzeAnother }: PaperActionsProps) 
       }
 
       const { whim } = await response.json();
-      router.push(`/whims/${whim.id}`);
+      router.push(`/whim?id=${whim.id}`);
     } catch (error) {
       console.error("Error saving whim:", error);
       setSaveError("Failed to save as Whim. Please try again.");
