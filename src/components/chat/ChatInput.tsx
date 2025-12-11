@@ -206,7 +206,16 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           )}
 
           {/* Input Area */}
-          <div className="flex items-end gap-2 p-2">
+          <div
+            className="flex items-center gap-2 p-2 cursor-text select-none"
+            onClick={(e) => {
+              // If clicking on the container (not on buttons), focus the textarea
+              if (e.target === e.currentTarget) {
+                e.preventDefault();
+                textareaRef.current?.focus();
+              }
+            }}
+          >
             {/* Add File Button */}
             <Button
               type="button"
@@ -242,7 +251,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
               placeholder="Message WhimCraft..."
               disabled={disabled || isProcessing}
               rows={1}
-              className="flex-1 resize-none bg-transparent px-2 py-2.5 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-400 min-h-[40px] max-h-[200px] text-slate-700 placeholder:text-slate-400"
+              className="flex-1 resize-none bg-transparent px-2 py-0 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-400 max-h-[200px] text-slate-700 placeholder:text-slate-400 leading-10 self-center"
             />
 
             {/* Send Button */}

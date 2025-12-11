@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import { ConversationClient } from "@/types";
 import { ConversationList } from "./ConversationList";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, FileText, LogOut, Settings, Brain, Target, BookOpen } from "lucide-react";
+import { PlusCircle, FileText, LogOut, Settings, Brain, Target } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -112,15 +112,6 @@ export function ChatSidebar({
           <button className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold italic text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <FileText className="w-4 h-4" />
             Go To Whims
-          </button>
-        </Link>
-
-        {/* Paper Reader */}
-        <Link href="/paper" className="block">
-          <button className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-            <BookOpen className="w-4 h-4" />
-            Paper Reader
-            <span className="ml-auto text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">Beta</span>
           </button>
         </Link>
 
