@@ -167,10 +167,12 @@ export function WelcomeNavigator({ userName }: WelcomeNavigatorProps) {
       <div className="w-full max-w-2xl px-6 py-8 space-y-8 select-none">
         {/* Greeting */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-3xl font-bold text-slate-400">
             {getGreeting()}
           </h1>
-          <p className="mt-2 text-slate-500">What would you like to do today?</p>
+          <p className="mt-2 text-slate-500 italic">
+            Welcome to <span className="text-blue-500">Whim</span>Craft. What would you like to do today?
+          </p>
         </div>
 
         {/* Today's Focus - subtle, no box */}
