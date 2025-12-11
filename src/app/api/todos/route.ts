@@ -3,14 +3,22 @@ import { authOptions } from "@/lib/auth";
 import { db, COLLECTIONS } from "@/lib/firebase-admin";
 import { NextRequest } from "next/server";
 
-// Helper to get today's date in YYYY-MM-DD format
-function getTodayDate(): string {
+// Helper to get today's date in YYYY-MM-DD format for a given timezone
+function getTodayDate(timezone?: string): string {
   const now = new Date();
+  if (timezone) {
+    try {
+      // Format date in the user's timezone
+      return now.toLocaleDateString("en-CA", { timeZone: timezone }); // en-CA gives YYYY-MM-DD format
+    } catch {
+      // Invalid timezone, fall back to UTC
+    }
+  }
   return now.toISOString().split("T")[0];
 }
 
 // GET - List user's todos for today (with carryover from previous days)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -18,7 +26,9 @@ export async function GET() {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const today = getTodayDate();
+    // Get timezone from query param (sent by client)
+    const timezone = req.nextUrl.searchParams.get("tz") || undefined;
+    const today = getTodayDate(timezone);
     const userId = session.user.id;
 
     // First, try to get today's todos
@@ -115,14 +125,14 @@ export async function POST(req: NextRequest) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const { content } = await req.json();
+    const { content, timezone } = await req.json();
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return new Response("Content is required", { status: 400 });
     }
 
     const now = new Date();
-    const today = getTodayDate();
+    const today = getTodayDate(timezone);
 
     const todoRef = await db.collection(COLLECTIONS.TODOS).add({
       user_id: session.user.id,

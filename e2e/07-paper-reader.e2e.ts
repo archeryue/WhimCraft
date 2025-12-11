@@ -289,10 +289,10 @@ test.describe('Paper Reader - Analysis Flow', () => {
     expect(titleText).not.toBe('Untitled Paper');
     expect(titleText?.toLowerCase()).toContain('attention');
 
-    // Verify all required analysis sections are present
-    await expect(page.locator('text=Summary')).toBeVisible();
-    await expect(page.locator('text=Key Contributions').or(page.locator('text=Key Findings'))).toBeVisible();
-    await expect(page.locator('text=Methodology')).toBeVisible();
+    // Verify all required analysis sections are present (use heading selectors to avoid duplicates)
+    await expect(page.locator('h2:has-text("Summary")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Key Contributions"), h2:has-text("Key Findings")').first()).toBeVisible();
+    await expect(page.locator('h2:has-text("Methodology")')).toBeVisible();
   });
 });
 
@@ -414,19 +414,16 @@ test.describe('Paper Reader - Error Handling', () => {
 });
 
 test.describe('Paper Reader - Navigation', () => {
-  test('should be accessible from chat sidebar', async ({ page }) => {
+  test('should be accessible from welcome page', async ({ page }) => {
     await page.goto('/chat');
     await page.waitForLoadState('networkidle');
 
-    // Find Paper Reader link in sidebar
-    const paperReaderLink = page.locator('a[href="/paper"]');
-    await expect(paperReaderLink).toBeVisible();
-
-    // Should show Beta badge
-    await expect(page.locator('text=Beta').first()).toBeVisible();
+    // Find Paper Reader button on welcome page
+    const paperReaderButton = page.locator('button:has-text("Paper Reader")');
+    await expect(paperReaderButton).toBeVisible();
 
     // Click to navigate
-    await paperReaderLink.click();
+    await paperReaderButton.click();
 
     // Should be on paper reader page
     await expect(page).toHaveURL(/\/paper/);

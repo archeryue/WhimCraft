@@ -84,6 +84,12 @@ export class PaperReaderSkill extends BaseSkill {
       pdfUrl = resolved.pdfUrl;
       paperTitle = resolved.metadata?.title;
       arxivId = resolved.metadata?.arxivId;
+
+      // Fallback: use arxiv ID as title if title fetch failed (e.g., 429 rate limit)
+      if (!paperTitle && arxivId) {
+        paperTitle = `arXiv:${arxivId}`;
+      }
+
       console.log(`[PaperReaderSkill] Resolved PDF URL: ${pdfUrl}`);
       console.log(`[PaperReaderSkill] Paper title: ${paperTitle || 'Not found'}`);
     } catch (error) {
@@ -100,6 +106,7 @@ export class PaperReaderSkill extends BaseSkill {
 
     // Step 1: Fetch PDF
     console.log('[PaperReaderSkill] Step 1: Fetching PDF...');
+    this.emitProgress(20, 'Fetching PDF...');
     const fetchResult = await this.pdfFetchTool.execute({ url: pdfUrl }, pdfContext);
     if (!fetchResult.success) {
       return this.errorOutput(`Failed to fetch PDF: ${fetchResult.error}`);
@@ -115,15 +122,16 @@ export class PaperReaderSkill extends BaseSkill {
       console.log(`[PaperReaderSkill] Buffer size: ${originalBuffer.byteLength} bytes`);
     }
 
-    // Step 2: Extract figures FIRST (before text_extract consumes the buffer)
+    // Step 2: Extract figures and text
     console.log('[PaperReaderSkill] Step 2: Extracting figures...');
+    this.emitProgress(40, 'Extracting content...');
     const figureResult = await this.figureExtractTool.execute(
       { maxFigures: 10 },
       pdfContext
     );
     console.log('[PaperReaderSkill] Figure extract result:', figureResult.success, figureResult.error);
 
-    // Step 3: Extract text (restore buffer if needed)
+    // Extract text (restore buffer if needed)
     console.log('[PaperReaderSkill] Step 3: Extracting text...');
     // Restore buffer from copy if it was consumed
     if (bufferCopy && (!pdfContext.pdfBuffer || pdfContext.pdfBuffer.byteLength === 0)) {
@@ -145,19 +153,21 @@ export class PaperReaderSkill extends BaseSkill {
     }
     console.log(`[PaperReaderSkill] Extracted ${rawFigures.length} candidate figures`);
 
-    // Step 4: Analyze figures with vision model
+    // Step 3: Analyze figures with vision model
     console.log('[PaperReaderSkill] Step 4: Analyzing figures with vision model...');
+    this.emitProgress(60, 'Analyzing figures...');
     const analyzedFigures = await this.analyzeFigures(rawFigures, query, textContent);
     console.log(`[PaperReaderSkill] ${analyzedFigures.length} figures passed analysis`);
 
-    // Step 5: Select key figures based on importance
+    // Step 4: Select key figures based on importance
     const keyFigures = this.selectKeyFigures(analyzedFigures, query, 3);
     console.log(`[PaperReaderSkill] Selected ${keyFigures.length} key figures`);
 
-    // Step 6: Generate paper analysis (with retry for JSON parse failures)
+    // Step 5: Generate paper analysis (with retry for JSON parse failures)
     let analysis: { summary: string; sections: SkillSection[] } | null = null;
     const maxAttempts = 3;
 
+    this.emitProgress(80, 'Generating analysis...');
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       console.log(`[PaperReaderSkill] Step 5: Generating paper analysis (attempt ${attempt}/${maxAttempts})...`);
       analysis = await this.analyzePaper(textContent, query, keyFigures);

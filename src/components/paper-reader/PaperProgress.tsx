@@ -1,14 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AnalysisProgress, AnalysisStage } from "@/lib/paper-reader/types";
+import { AnalysisProgress } from "@/lib/paper-reader/types";
 import {
   CheckCircle2,
   Loader2,
   XCircle,
-  FileSearch,
   Download,
   FileText,
+  ImageIcon,
   Brain,
   Sparkles,
 } from "lucide-react";
@@ -18,32 +18,32 @@ interface PaperProgressProps {
   className?: string;
 }
 
-const STAGE_CONFIG: Record<
-  AnalysisStage,
-  { label: string; icon: typeof Loader2 }
-> = {
-  validating: { label: "Validating URL", icon: FileSearch },
-  fetching: { label: "Downloading PDF", icon: Download },
-  parsing: { label: "Extracting Text", icon: FileText },
-  analyzing: { label: "AI Analysis", icon: Brain },
-  formatting: { label: "Formatting Results", icon: Sparkles },
-  complete: { label: "Complete", icon: CheckCircle2 },
-  error: { label: "Error", icon: XCircle },
-};
-
-const STAGE_ORDER: AnalysisStage[] = [
-  "validating",
-  "fetching",
-  "parsing",
-  "analyzing",
-  "complete",
+// 5-step progress stages matching the skill
+const STEPS = [
+  { label: "Fetch PDF", icon: Download, minProgress: 0 },
+  { label: "Extract", icon: FileText, minProgress: 20 },
+  { label: "Figures", icon: ImageIcon, minProgress: 40 },
+  { label: "Analyze", icon: Brain, minProgress: 60 },
+  { label: "Generate", icon: Sparkles, minProgress: 80 },
 ];
 
 export function PaperProgress({ progress, className }: PaperProgressProps) {
   if (!progress) return null;
 
-  const currentStageIndex = STAGE_ORDER.indexOf(progress.stage);
   const isError = progress.stage === "error";
+  const progressValue = progress.progress;
+
+  // Find current step based on progress percentage
+  const getCurrentStepIndex = () => {
+    for (let i = STEPS.length - 1; i >= 0; i--) {
+      if (progressValue >= STEPS[i].minProgress) {
+        return i;
+      }
+    }
+    return 0;
+  };
+
+  const currentStepIndex = getCurrentStepIndex();
 
   return (
     <div className={cn("w-full max-w-2xl mx-auto", className)} data-testid="paper-progress">
@@ -52,7 +52,7 @@ export function PaperProgress({ progress, className }: PaperProgressProps) {
         <div className="mb-6">
           <div className="flex justify-between text-sm text-slate-600 mb-2">
             <span>{progress.message}</span>
-            <span>{progress.progress}%</span>
+            <span>{progressValue}%</span>
           </div>
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
@@ -60,23 +60,22 @@ export function PaperProgress({ progress, className }: PaperProgressProps) {
                 "h-full transition-all duration-300 rounded-full",
                 isError ? "bg-red-500" : "bg-blue-500"
               )}
-              style={{ width: `${progress.progress}%` }}
+              style={{ width: `${progressValue}%` }}
             />
           </div>
         </div>
 
-        {/* Stage indicators */}
+        {/* Stage indicators - 5 steps */}
         <div className="flex justify-between">
-          {STAGE_ORDER.slice(0, -1).map((stage, index) => {
-            const config = STAGE_CONFIG[stage];
-            const Icon = config.icon;
-            const isCompleted = currentStageIndex > index;
-            const isCurrent = currentStageIndex === index;
-            const isPending = currentStageIndex < index;
+          {STEPS.map((step, index) => {
+            const Icon = step.icon;
+            const isCompleted = progressValue > step.minProgress + 19;
+            const isCurrent = currentStepIndex === index && !isCompleted;
+            const isPending = progressValue < step.minProgress;
 
             return (
               <div
-                key={stage}
+                key={step.label}
                 className={cn(
                   "flex flex-col items-center gap-1",
                   isPending && "opacity-40"
@@ -112,7 +111,7 @@ export function PaperProgress({ progress, className }: PaperProgressProps) {
                     isPending && "text-slate-400"
                   )}
                 >
-                  {config.label}
+                  {step.label}
                 </span>
               </div>
             );

@@ -42,9 +42,20 @@ export function WelcomeNavigator({ userName }: WelcomeNavigatorProps) {
     loadTodos();
   }, []);
 
+  // Get user's timezone
+  const getTimezone = () => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return undefined;
+    }
+  };
+
   const loadTodos = async () => {
     try {
-      const response = await fetch("/api/todos");
+      const tz = getTimezone();
+      const url = tz ? `/api/todos?tz=${encodeURIComponent(tz)}` : "/api/todos";
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setTodos(
@@ -70,7 +81,10 @@ export function WelcomeNavigator({ userName }: WelcomeNavigatorProps) {
       const response = await fetch("/api/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newTodoContent.trim() }),
+        body: JSON.stringify({
+          content: newTodoContent.trim(),
+          timezone: getTimezone(),
+        }),
       });
 
       if (response.ok) {
