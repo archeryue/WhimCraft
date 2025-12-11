@@ -99,3 +99,22 @@ export interface UserStats {
   message_count: number;
   last_active: Date;
 }
+
+// User Todo for Navigator Welcome
+export interface UserTodo {
+  id: string;
+  content: string;
+  completed: boolean;
+  date: string; // YYYY-MM-DD format
+  created_at: Timestamp;
+  updated_at: Timestamp;
+}
+
+export interface UserTodoClient {
+  id: string;
+  content: string;
+  completed: boolean;
+  date: string; // YYYY-MM-DD format
+  created_at: Date;
+  updated_at: Date;
+}
