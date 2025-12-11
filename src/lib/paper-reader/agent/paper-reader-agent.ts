@@ -123,14 +123,6 @@ export class PaperReaderAgent {
     const query = userQuery || 'Analyze this paper and explain its main contributions.';
 
     try {
-      // Phase 1: Extraction + Analysis via Skill
-      this.emitProgress({
-        phase: 'extraction',
-        stage: 'starting',
-        progress: 5,
-        message: 'Starting paper analysis...',
-      });
-
       // Create context for skill execution
       const context: ToolContext = {
         userId: userId || 'paper-reader-agent',
@@ -138,22 +130,25 @@ export class PaperReaderAgent {
         requestId: `analysis-${Date.now()}`,
       };
 
-      this.emitProgress({
-        phase: 'extraction',
-        stage: 'fetching',
-        progress: 10,
-        message: 'Fetching PDF...',
+      // Set up progress callback to relay skill progress to agent progress
+      paperReaderSkill.setProgressCallback((progress, message) => {
+        // Map skill progress to phases
+        let phase: ProgressPhase = 'analysis';
+        if (progress <= 30) {
+          phase = 'extraction';
+        } else if (progress >= 80) {
+          phase = 'synthesis';
+        }
+
+        this.emitProgress({
+          phase,
+          stage: 'skill_execution',
+          progress,
+          message,
+        });
       });
 
       // Execute PaperReaderSkill (handles extraction + analysis)
-      this.emitProgress({
-        phase: 'analysis',
-        stage: 'skill_execution',
-        progress: 30,
-        message: 'Analyzing paper content and figures...',
-        thought: 'Using PaperReaderSkill to extract and analyze figures with importance scoring',
-      });
-
       const skillResult = await paperReaderSkill.execute(
         {
           query,
@@ -165,21 +160,6 @@ export class PaperReaderAgent {
       if (!skillResult.success) {
         throw new Error(skillResult.error || 'Skill execution failed');
       }
-
-      this.emitProgress({
-        phase: 'analysis',
-        stage: 'figures_analyzed',
-        progress: 70,
-        message: `Analyzed ${skillResult.figures?.length || 0} key figures`,
-      });
-
-      // Phase 3: Synthesis
-      this.emitProgress({
-        phase: 'synthesis',
-        stage: 'generating',
-        progress: 80,
-        message: 'Generating structured analysis...',
-      });
 
       const result = await this.synthesizeResult(url, query, skillResult);
 

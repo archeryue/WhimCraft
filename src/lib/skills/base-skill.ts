@@ -10,6 +10,11 @@ import { ModelTier } from '@/config/models';
 import { Skill, SkillInput, SkillOutput, SkillContext } from './types';
 
 /**
+ * Progress callback for skill execution
+ */
+export type SkillProgressCallback = (progress: number, message: string) => void;
+
+/**
  * Abstract base class for skills
  */
 export abstract class BaseSkill implements Skill {
@@ -21,6 +26,23 @@ export abstract class BaseSkill implements Skill {
 
   protected context!: SkillContext;
   protected startTime: number = 0;
+  protected onProgress?: SkillProgressCallback;
+
+  /**
+   * Set progress callback for streaming updates
+   */
+  setProgressCallback(callback: SkillProgressCallback): void {
+    this.onProgress = callback;
+  }
+
+  /**
+   * Emit progress update
+   */
+  protected emitProgress(progress: number, message: string): void {
+    if (this.onProgress) {
+      this.onProgress(progress, message);
+    }
+  }
 
   /**
    * Execute the skill with timing and error handling

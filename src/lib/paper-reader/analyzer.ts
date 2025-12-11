@@ -153,23 +153,27 @@ function extractTitle(
   resolvedPaper: ResolvedPaper,
   summary: string
 ): string {
-  // Try PDF metadata first
-  if (parsedPaper.metadata.title) {
-    return parsedPaper.metadata.title;
-  }
-
-  // Try resolved metadata
+  // Try resolved metadata first (arXiv API title)
   if (resolvedPaper.metadata?.title) {
     return resolvedPaper.metadata.title;
   }
 
-  // Fallback: Generate from summary or first line
-  const firstLine = parsedPaper.text.split("\n")[0]?.trim();
-  if (firstLine && firstLine.length < 200) {
-    return firstLine;
+  // Try PDF metadata
+  if (parsedPaper.metadata.title) {
+    return parsedPaper.metadata.title;
   }
 
-  // Last resort: Use arxiv ID or generic title
+  // Try to extract from first line of text (often the title in PDFs)
+  const firstLine = parsedPaper.text.split("\n")[0]?.trim();
+  if (firstLine && firstLine.length > 10 && firstLine.length < 200) {
+    // Check if it looks like a title (not just numbers or metadata)
+    const looksLikeTitle = /^[A-Z]/.test(firstLine) && !/^\d+$/.test(firstLine);
+    if (looksLikeTitle) {
+      return firstLine;
+    }
+  }
+
+  // Fallback: Use arxiv ID as title (better than "Untitled Paper")
   if (resolvedPaper.metadata?.arxivId) {
     return `arXiv:${resolvedPaper.metadata.arxivId}`;
   }
