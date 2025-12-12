@@ -32,10 +32,11 @@ export async function GET(req: NextRequest) {
     const userId = session.user.id;
 
     // First, try to get today's todos
+    // Use existing index: date ASC, user_id ASC, created_at DESC
     const todaySnapshot = await db
       .collection(COLLECTIONS.TODOS)
-      .where("user_id", "==", userId)
       .where("date", "==", today)
+      .where("user_id", "==", userId)
       .orderBy("created_at", "desc")
       .get();
 
@@ -56,17 +57,24 @@ export async function GET(req: NextRequest) {
     }
 
     // No todos for today - check for incomplete todos from previous days
-    const previousIncompleteSnapshot = await db
+    // Use existing index (date ASC, user_id ASC, created_at DESC)
+    // Note: We query ascending and reverse in memory for "most recent first"
+    const previousTodosSnapshot = await db
       .collection(COLLECTIONS.TODOS)
-      .where("user_id", "==", userId)
-      .where("completed", "==", false)
       .where("date", "<", today)
-      .orderBy("date", "desc")
+      .where("user_id", "==", userId)
+      .orderBy("date", "asc")
       .orderBy("created_at", "desc")
-      .limit(20) // Reasonable limit
+      .limit(50) // Fetch more since we filter in memory
       .get();
 
-    if (previousIncompleteSnapshot.empty) {
+    // Filter to only incomplete todos, then reverse to get most recent first
+    const previousIncompleteDocs = previousTodosSnapshot.docs
+      .filter((doc) => doc.data().completed === false)
+      .reverse()
+      .slice(0, 20);
+
+    if (previousIncompleteDocs.length === 0) {
       // No previous incomplete todos, return empty
       return Response.json({ todos: [] });
     }
@@ -83,7 +91,7 @@ export async function GET(req: NextRequest) {
       updated_at: string;
     }[] = [];
 
-    for (const doc of previousIncompleteSnapshot.docs) {
+    for (const doc of previousIncompleteDocs) {
       const data = doc.data();
       const newTodoRef = db.collection(COLLECTIONS.TODOS).doc();
 

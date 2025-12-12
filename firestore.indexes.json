@@ -51,16 +51,12 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "user_id",
           "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "completed",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
         },
         {
           "fieldPath": "created_at",
