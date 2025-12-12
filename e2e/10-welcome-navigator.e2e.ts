@@ -33,8 +33,8 @@ test.describe('Welcome Navigator', () => {
     await input.fill('E2E Test Todo');
     await input.press('Enter');
 
-    // Wait for todo to appear in the list
-    await expect(page.locator('text=E2E Test Todo')).toBeVisible({ timeout: 5000 });
+    // Wait for todo to appear in the list (use .first() in case of duplicates from previous runs)
+    await expect(page.locator('text=E2E Test Todo').first()).toBeVisible({ timeout: 5000 });
 
     // Input should be hidden after adding
     await expect(input).not.toBeVisible();
