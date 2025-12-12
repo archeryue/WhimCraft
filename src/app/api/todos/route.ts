@@ -32,11 +32,12 @@ export async function GET(req: NextRequest) {
     const userId = session.user.id;
 
     // First, try to get today's todos
-    // Use existing index: date ASC, user_id ASC, created_at DESC
+    // Use index: user_id ASC, date DESC, created_at DESC
     const todaySnapshot = await db
       .collection(COLLECTIONS.TODOS)
-      .where("date", "==", today)
       .where("user_id", "==", userId)
+      .where("date", "==", today)
+      .orderBy("date", "desc")
       .orderBy("created_at", "desc")
       .get();
 
@@ -56,22 +57,27 @@ export async function GET(req: NextRequest) {
       return Response.json({ todos });
     }
 
-    // No todos for today - check for incomplete todos from previous days
-    // Use existing index (date ASC, user_id ASC, created_at DESC)
-    // Note: We query ascending and reverse in memory for "most recent first"
-    const previousTodosSnapshot = await db
+    // No todos for today - check the most recent day that has any todos
+    // Uses index: user_id ASC, date DESC, created_at DESC
+    const recentTodosSnapshot = await db
       .collection(COLLECTIONS.TODOS)
-      .where("date", "<", today)
       .where("user_id", "==", userId)
-      .orderBy("date", "asc")
+      .where("date", "<", today)
+      .orderBy("date", "desc")
       .orderBy("created_at", "desc")
-      .limit(50) // Fetch more since we filter in memory
+      .limit(50)
       .get();
 
-    // Filter to only incomplete todos, then reverse to get most recent first
-    const previousIncompleteDocs = previousTodosSnapshot.docs
-      .filter((doc) => doc.data().completed === false)
-      .reverse()
+    if (recentTodosSnapshot.empty) {
+      return Response.json({ todos: [] });
+    }
+
+    // Get the most recent date (first doc has the most recent date)
+    const mostRecentDate = recentTodosSnapshot.docs[0].data().date;
+
+    // Filter to todos from that date only, then to incomplete ones
+    const previousIncompleteDocs = recentTodosSnapshot.docs
+      .filter(doc => doc.data().date === mostRecentDate && doc.data().completed === false)
       .slice(0, 20);
 
     if (previousIncompleteDocs.length === 0) {
