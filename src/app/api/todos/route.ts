@@ -32,11 +32,12 @@ export async function GET(req: NextRequest) {
     const userId = session.user.id;
 
     // First, try to get today's todos
-    // Use existing index: date ASC, user_id ASC, created_at DESC
+    // Use index: user_id ASC, date DESC, created_at DESC
     const todaySnapshot = await db
       .collection(COLLECTIONS.TODOS)
-      .where("date", "==", today)
       .where("user_id", "==", userId)
+      .where("date", "==", today)
+      .orderBy("date", "desc")
       .orderBy("created_at", "desc")
       .get();
 
@@ -63,6 +64,7 @@ export async function GET(req: NextRequest) {
       .where("user_id", "==", userId)
       .where("date", "<", today)
       .orderBy("date", "desc")
+      .orderBy("created_at", "desc")
       .limit(50)
       .get();
 
