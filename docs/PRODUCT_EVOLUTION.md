@@ -21,8 +21,12 @@ A chronological journey through the key architectural, product, and development 
 | 🚀 **9** | **Nov 22** | **PRO Mode & Testing** | Gemini 3.0 models + 363 automated tests |
 | 📡 **10** | **Nov 23** | **Streaming Resilience** | Auto-resume + Image-to-image generation |
 | 🌐 **11** | **Nov 24** | **Web Fetch Resilience** | 90-95% success with zero-cost fallback |
+| 🖼️ **12** | **Nov 28** | **Image Upload & Storage** | R2 storage + paste/drag-drop images in chat |
+| 📄 **13** | **Dec 1-8** | **Paper & Repo Readers** | Analyze arXiv papers and GitHub repos |
+| 🔬 **14** | **Dec 12** | **Deep Research** | Multi-turn research with Gemini Interactions API |
+| 🛠️ **15** | **Dec 13** | **Skills Reorganization** | test + verify skills for comprehensive QA |
 
-**Key Metrics**: 5x codebase growth • 363 tests • 23 features • $0 cost increase
+**Key Metrics**: 5x codebase growth • 446 tests (374 unit + 72 E2E) • 28 features • $0 cost increase
 
 ---
 
@@ -603,6 +607,186 @@ interface PageContent {
 
 ---
 
+## Phase 12: Image Upload & Storage (November 28, 2025)
+
+### Image Support with Cloudflare R2
+**Commits**: Multiple commits implementing image upload infrastructure
+
+**Product Capability**: Users can paste or drag-drop images directly into chat.
+
+**Architecture**:
+```
+User pastes image → Client upload → R2 Storage → CDN URL → Display in chat
+```
+
+**Features**:
+- **Paste support**: Ctrl+V to paste images from clipboard
+- **Drag & drop**: Drop images directly into chat input
+- **R2 Storage**: Cloudflare R2 for cost-effective object storage
+- **Image processing**: Resize, optimize for web delivery
+- **CDN delivery**: Fast global access via Cloudflare CDN
+
+**Technical Implementation**:
+- `ImageProcessor` class for client-side optimization
+- `R2Client` for server-side storage operations
+- Automatic format conversion (WebP for efficiency)
+- Size limits and validation
+
+**Cost Optimization**:
+- Cloudflare R2: $0.015/GB storage, $0 egress
+- Much cheaper than S3 ($0.023/GB + egress fees)
+- Free tier: 10GB storage, 1M requests/month
+
+**Use Cases**:
+- Share screenshots for debugging help
+- Upload diagrams for explanation
+- Send photos for image-related questions
+- Reference images for image generation
+
+**Impact**: Chat becomes truly multimodal - users can communicate with images, not just text.
+
+---
+
+## Phase 13: Paper & Repo Readers (December 1-8, 2025)
+
+### Paper Reader - Academic Paper Analysis
+**Commits**: Multiple commits implementing Paper Reader feature
+
+**Product Capability**: Analyze arXiv papers and generate structured summaries.
+
+**Architecture** (Skill → Agent → API → Page):
+```
+User pastes URL → Paper Reader Agent → Fetch PDF → Extract content → AI Analysis → Structured output
+```
+
+**Features**:
+- arXiv URL validation and metadata extraction
+- PDF content extraction with PyMuPDF
+- Multi-phase analysis (overview, methodology, results, critique)
+- Save analysis as Whim document
+- Progress tracking via SSE
+
+**Technical Implementation**:
+- `PaperReaderSkill` for orchestration
+- `PaperReaderAgent` with ReAct pattern
+- Figure extraction and analysis
+- Citation parsing
+
+### Repo Reader - GitHub Repository Analysis
+**Commit**: `ccad4ed` - *feat: Add Repo Reader MVP and Verify Skill*
+
+**Product Capability**: Analyze GitHub repositories and generate architecture documents.
+
+**Key Design Principle**: **Deterministic exploration** rather than AI-guessed file selection.
+
+**Exploration Strategy**:
+1. Read README and config files (understand project)
+2. Find entry points based on project type
+3. Trace imports from entry points
+4. Explore import graph until token budget reached
+
+**4-Phase Analysis**:
+1. **Recon (0-20%)**: README, package.json, config files
+2. **Entry Points (20-40%)**: Find main files based on framework
+3. **Module Exploration (40-70%)**: Trace imports, build dependency graph
+4. **Synthesis (70-100%)**: Generate architecture document
+
+**Output**: Comprehensive architecture document with:
+- Project overview and tech stack
+- Module breakdown with responsibilities
+- Key architectural patterns
+- File-level documentation
+
+**Impact**: Developers can quickly understand unfamiliar codebases.
+
+---
+
+## Phase 14: Deep Research (December 12, 2025)
+
+### Deep Research with Gemini Interactions API
+**Commit**: `b3b27c0` - *feat: Add Deep Research integration with Gemini Interactions API*
+
+**Product Capability**: Multi-turn research sessions for complex questions.
+
+**Architecture**:
+```
+User Query → Deep Research Agent → Multiple Search Iterations → Synthesized Report
+```
+
+**Key Innovation**: Uses Gemini's **Interactions API** for:
+- Grounded search (real-time web results)
+- Multi-turn reasoning
+- Source citation
+- Automatic follow-up queries
+
+**Features**:
+- Extended research sessions (up to 10 iterations)
+- Automatic source aggregation
+- Structured report generation
+- Save research as Whim
+
+**Use Cases**:
+- Complex technical questions
+- Comparative analysis
+- Trend research
+- Deep dives on topics
+
+**Impact**: AI can now conduct thorough research like a human researcher.
+
+---
+
+## Phase 15: Skills Reorganization (December 13, 2025)
+
+### Claude Code Skills Refactoring
+**Commit**: `1c8e3e0` - *docs: Reorganize skills and remove outdated docs*
+
+**Development Model Evolution**: Clearer separation of testing concerns.
+
+**Before**:
+- `e2e-test`: Only E2E tests
+- `verify`: Generic verification
+
+**After**:
+- `test`: Run all tests (374 unit + 72 E2E)
+- `verify`: Comprehensive 6-phase workflow
+
+**New `verify` Skill Workflow**:
+```
+┌─────────────────────────────────────────────────┐
+│  Phase 1: CODE REVIEW                           │
+│  └─ Review git diff, understand changes         │
+├─────────────────────────────────────────────────┤
+│  Phase 2: TEST COVERAGE ANALYSIS                │
+│  └─ Check existing tests, identify gaps         │
+├─────────────────────────────────────────────────┤
+│  Phase 3: ADD/UPDATE TESTS                      │
+│  └─ Write unit tests, E2E tests if needed       │
+├─────────────────────────────────────────────────┤
+│  Phase 4: RUN ALL TESTS                         │
+│  └─ Jest (374) + Playwright (72) + build + lint │
+├─────────────────────────────────────────────────┤
+│  Phase 5: BROWSER SIMULATION                    │
+│  └─ Real user behavior verification             │
+├─────────────────────────────────────────────────┤
+│  Phase 6: REPORT RESULTS                        │
+│  └─ READY TO COMMIT or NEEDS WORK               │
+└─────────────────────────────────────────────────┘
+```
+
+**Key Addition**: Phase 5 **Browser Simulation** - use Playwright to simulate real user behavior, not just run automated tests.
+
+**4 Active Skills**:
+| Skill | Purpose |
+|-------|---------|
+| `test` | Run unit + E2E tests |
+| `verify` | Full verification with browser simulation |
+| `push` | Git workflow (develop → main) |
+| `ship` | Deploy to Cloud Run |
+
+**Impact**: More thorough QA process before commits.
+
+---
+
 ## Key Metrics Evolution
 
 ### Codebase Growth
@@ -613,11 +797,13 @@ interface PageContent {
 - **October 29**: 0 tests
 - **November 3**: 42 tests (memory system)
 - **November 21**: 145 tests (comprehensive unit)
-- **November 24**: **290 unit tests + 73 E2E tests**
+- **November 24**: 290 unit tests + 73 E2E tests
+- **December 13**: **374 unit tests + 72 E2E tests = 446 total**
 
 ### Feature Count
 - **October 29**: 5 features (chat, auth, streaming, storage, oauth)
-- **November 24**: **23 features** (memory, search, fetch, agentic, whims, PRO, images, LaTeX, etc.)
+- **November 24**: 23 features (memory, search, fetch, agentic, whims, PRO, images, LaTeX, etc.)
+- **December 13**: **28 features** (+Image Upload, Paper Reader, Repo Reader, Deep Research, Skills)
 
 ### Cost Optimization
 - **October 29**: ~$10-15/month estimate
@@ -791,11 +977,11 @@ WhimCraft aims to be:
 
 ## Conclusion
 
-In 27 days (October 29 - November 24, 2025), WhimCraft evolved from a simple chatbot into a sophisticated AI agent platform through:
+In 46 days (October 29 - December 13, 2025), WhimCraft evolved from a simple chatbot into a sophisticated AI agent platform through:
 
-- **7 major architecture transformations**
-- **20+ product features**
-- **363 automated tests**
+- **15 major phases** of development
+- **28 product features**
+- **446 automated tests** (374 unit + 72 E2E)
 - **$0 cost increase** (actually saved $0.15/month)
 - **100% uptime** on production
 - **Zero security incidents**
@@ -807,10 +993,10 @@ The evolution demonstrates that:
 4. **User-driven development** finds the right features
 5. **AI-assisted development** (Claude Code) accelerates velocity without sacrificing quality
 
-WhimCraft is now a production-ready, family-scale AI agent platform that rivals commercial products while remaining within a $30/month budget.
+WhimCraft is now a production-ready, family-scale AI agent platform that rivals commercial products while remaining within a $30/month budget. Recent additions (Paper Reader, Repo Reader, Deep Research) position it as a comprehensive knowledge work assistant.
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: November 24, 2025
+**Document Version**: 2.0
+**Last Updated**: December 13, 2025
 **Maintained By**: Archer & Claude Code
