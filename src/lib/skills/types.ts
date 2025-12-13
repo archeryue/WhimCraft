@@ -52,6 +52,10 @@ export interface SkillOutput {
     title?: string;
     /** arXiv ID if applicable */
     arxivId?: string;
+    /** Files explored (for repo analysis) */
+    filesExplored?: number;
+    /** Project type detected (for repo analysis) */
+    projectType?: string;
   };
 }
 
