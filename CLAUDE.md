@@ -104,7 +104,8 @@ Conversation → /save command → AI Title + JSON Blocks → Whim (TipTap Edito
 - **ALWAYS** run E2E tests after bug fixes to confirm the fix
 - **NEVER** tell the user a feature is complete without running E2E tests first
 - **NEVER** commit until all tests pass (100% pass rate required)
-- Use the `e2e-test` skill for commands and debugging
+- Use the `test` skill for running tests
+- Use the `verify` skill for comprehensive verification including browser simulation
 
 ### 3. ✅ VERIFICATION: Verify Before Reporting Success
 1. Make code changes
@@ -219,7 +220,8 @@ Skills provide specialized workflows for common tasks. Invoke with `skill: "name
 
 | Skill | Triggers | Description |
 |-------|----------|-------------|
-| `e2e-test` | "verify", "test the feature", "e2e", "playwright", "run tests" | Run Playwright E2E tests to verify features |
+| `test` | "run tests", "jest", "playwright", "unit test", "e2e test" | Run unit tests (Jest) and E2E tests (Playwright) |
+| `verify` | "verify", "verify changes", "check if it works", "validate" | Code review + add tests + run tests + browser simulation |
 | `push` | "push", "merge to main", "update main", "sync main" | Push develop, rebase onto main, create PR and merge |
 | `ship` | "ship", "deploy", "push to production", "go live", "release" | Deploy to Google Cloud Run with verification |
 
@@ -241,5 +243,5 @@ See `docs/README.md` for full index. Key docs:
 
 ---
 
-**Last Updated**: December 8, 2025
+**Last Updated**: December 13, 2025
 **Maintained By**: Archer & Claude Code
