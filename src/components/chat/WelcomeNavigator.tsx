@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UserTodoClient } from "@/types";
-import { FileText, FolderGit2, Plus, Trash2, Check } from "lucide-react";
+import { FileText, FolderGit2, Search, Plus, Trash2, Check } from "lucide-react";
 
 interface WelcomeNavigatorProps {
   userName?: string;
@@ -283,6 +283,14 @@ export function WelcomeNavigator({ userName }: WelcomeNavigatorProps) {
           >
             <FolderGit2 className="w-4 h-4 text-purple-500" />
             Repo Reader
+          </button>
+
+          <button
+            onClick={() => router.push("/research")}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-slate-50 transition-all text-sm text-slate-600 hover:text-slate-800"
+          >
+            <Search className="w-4 h-4 text-teal-500" />
+            Deep Research
           </button>
         </div>
       </div>
