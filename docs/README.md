@@ -55,13 +55,6 @@ Guide for implementing new AI providers using the `IAIProvider` interface. Curre
 
 ---
 
-## Planning
-
-### [FEATURE_PLAN_V2.md](./FEATURE_PLAN_V2.md)
-**Status: Planning** - Three major features: Paper Reader (analyze arXiv papers), Repo Reader (analyze GitHub repos), Navigator Welcome Page (dashboard with task recommendations).
-
----
-
 ## Key Features
 
 - **Agentic Mode**: ReAct pattern with autonomous tool use (default)
@@ -84,5 +77,5 @@ Guide for implementing new AI providers using the `IAIProvider` interface. Curre
 
 ---
 
-**Last Updated**: December 1, 2025
+**Last Updated**: December 13, 2025
 **Test Summary**: 307 unit tests, 72 E2E tests (100% pass rate)
