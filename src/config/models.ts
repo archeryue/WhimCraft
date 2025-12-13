@@ -8,6 +8,7 @@
  * - Tier 4 (PRO): Gemini 3.0 Pro for advanced reasoning (opt-in)
  * - Tier 5 (Image PRO): Gemini 3.0 Pro Image for high-quality image generation (opt-in)
  * - Tier 6 (Reader): Gemini 2.5 Flash for document analysis (upgradeable to 2.5 Pro)
+ * - Tier 7 (Research): Deep Research agent for comprehensive research reports
  *
  * Pricing (per 1M tokens):
  * - 2.5 Flash: $0.30 input / $2.50 output
@@ -15,6 +16,7 @@
  * - 2.5 Flash-Lite: $0.10 input / $0.40 output
  * - 3.0 Pro: $2.00 input / $12.00 output (≤200K context)
  * - 3.0 Pro Image: $2.00 text input / $0.134 per image output
+ * - Deep Research: $2.00 input (uses Interactions API)
  *
  * Benefits:
  * - Cost-optimized defaults for daily use
@@ -30,6 +32,7 @@ export enum ModelTier {
   PRO = "pro",            // Advanced reasoning (opt-in)
   IMAGE_PRO = "image_pro", // High-quality image generation (opt-in)
   READER = "reader",       // Long-context document analysis (Paper Reader)
+  RESEARCH = "research",   // Deep Research agent for comprehensive reports
 }
 
 export const GEMINI_MODELS = {
@@ -39,6 +42,7 @@ export const GEMINI_MODELS = {
   [ModelTier.PRO]: "gemini-3-pro-preview",
   [ModelTier.IMAGE_PRO]: "gemini-3-pro-image-preview",
   [ModelTier.READER]: "gemini-2.5-flash",  // TODO: Consider gemini-2.5-pro for higher quality
+  [ModelTier.RESEARCH]: "deep-research-pro-preview-12-2025",  // Uses Interactions API
 } as const;
 
 export const MODEL_CONFIGS = {
@@ -111,6 +115,19 @@ export const MODEL_CONFIGS = {
       output: 2.50,  // per 1M tokens
     },
   },
+  [ModelTier.RESEARCH]: {
+    model: GEMINI_MODELS[ModelTier.RESEARCH],
+    description: "Deep Research agent for comprehensive research reports",
+    contextWindow: 1048576,        // 1M tokens
+    maxOutputTokens: 65536,        // 65K tokens
+    knowledgeCutoff: "January 2025",
+    status: "preview" as const,
+    note: "Uses Interactions API, not generate_content. Long-running (up to 60 min).",
+    pricing: {
+      input: 2.00,   // per 1M tokens
+      output: 12.00, // per 1M tokens (estimated, report-based)
+    },
+  },
 } as const;
 
 /**
@@ -136,6 +153,7 @@ export function getModelForTask(task: "chat" | "image" | "memory" | "analysis" |
  * Get model tier from model name
  */
 export function getModelTier(modelName: string): ModelTier {
+  if (modelName.includes("deep-research")) return ModelTier.RESEARCH;
   if (modelName.includes("3-pro-image")) return ModelTier.IMAGE_PRO;
   if (modelName.includes("3-pro")) return ModelTier.PRO;
   if (modelName.includes("lite")) return ModelTier.LITE;
