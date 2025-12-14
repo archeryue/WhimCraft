@@ -13,6 +13,10 @@ A bilingual (English/Chinese) AI agent with advanced memory, personalization, an
 - 🚀 **PRO Mode**: Access to advanced Gemini 2.0 Flash Pro and Thinking models
 - 🌏 **Bilingual Support**: Full English and Chinese support (175+ keywords)
 - 📎 **File Attachments**: Upload and analyze images, PDFs with multimodal AI
+- 🖼️ **Image Upload & Storage**: Paste/drag-drop images with Cloudflare R2 storage
+- 📑 **Paper Reader**: Analyze arXiv papers with structured AI summaries
+- 📂 **Repo Reader**: Analyze GitHub repositories and generate architecture docs
+- 🔬 **Deep Research**: Multi-turn research sessions with Gemini Interactions API
 - 💬 **Streaming Responses**: Real-time AI chat with syntax highlighting and LaTeX support
 - 🔐 **Google OAuth**: Secure authentication with whitelist control
 - 📝 **Conversation Management**: Auto-generated titles, full history
@@ -30,8 +34,8 @@ A bilingual (English/Chinese) AI agent with advanced memory, personalization, an
 - **Authentication**: NextAuth.js (Google OAuth)
 - **AI**: Google Gemini API (2.5 Flash, Image, Lite)
 - **Styling**: Tailwind CSS + shadcn/ui
-- **Unit Testing**: Jest + TypeScript (290 tests, 100% pass rate)
-- **E2E Testing**: Playwright (73 tests in 8 files, 100% pass rate)
+- **Unit Testing**: Jest + TypeScript (374 tests, 100% pass rate)
+- **E2E Testing**: Playwright (142 tests in 14 files, 100% pass rate)
 - **Deployment**: Cloud Run (GCP)
 
 ## Local Development Setup
@@ -144,6 +148,9 @@ src/
     admin/                # Admin panel
     profile/              # User memory profile page
     whim/                 # Whim management page
+    paper-reader/         # arXiv paper analysis page
+    repo-reader/          # GitHub repo analysis page
+    deep-research/        # Deep research page
     login/                # Login page
     layout.tsx            # Root layout with providers
   components/
@@ -180,6 +187,9 @@ src/
     keywords/             # Keyword trigger system (legacy)
       system.ts
       triggers.ts
+    paper-reader/         # arXiv paper analysis
+    repo-reader/          # GitHub repository analysis
+    deep-research/        # Multi-turn research with Gemini
   config/
     models.ts             # Gemini model tiering
     keywords.ts           # Bilingual keywords (175+ triggers)
@@ -192,8 +202,8 @@ src/
     ai-providers.ts       # Provider interfaces
     agent.ts              # Agent types
     prompt-analysis.ts    # Analysis types
-  __tests__/              # Jest unit tests (145+ tests)
-e2e/                      # Playwright E2E tests (71 tests, 6 suites)
+  __tests__/              # Jest unit tests (374 tests)
+e2e/                      # Playwright E2E tests (142 tests, 14 files)
 ```
 
 ## Key Features Explained
@@ -259,6 +269,38 @@ Real-time visual feedback during AI responses:
 - Single updating badge shows current progress
 - Server-Sent Events protocol for streaming updates
 
+### 🖼️ Image Upload & Storage
+
+Upload images directly in chat:
+- **Paste**: Ctrl+V to paste images from clipboard
+- **Drag & drop**: Drop images directly into chat input
+- **Storage**: Cloudflare R2 for cost-effective storage
+- **CDN**: Fast global delivery via Cloudflare CDN
+
+### 📑 Paper Reader
+
+Analyze academic papers from arXiv:
+- **URL validation**: arXiv paper URL detection
+- **Multi-phase analysis**: Overview, methodology, results, critique
+- **Save to Whim**: Export analysis as editable document
+- **Progress tracking**: Real-time analysis status
+
+### 📂 Repo Reader
+
+Analyze GitHub repositories:
+- **Deterministic exploration**: Import-tracing instead of AI guessing
+- **4-phase analysis**: Recon → Entry points → Module exploration → Synthesis
+- **Architecture docs**: Generate comprehensive architecture documentation
+- **Token-budgeted**: Smart file selection within limits
+
+### 🔬 Deep Research
+
+Multi-turn research sessions:
+- **Gemini Interactions API**: Grounded search with real-time results
+- **Iterative queries**: Up to 10 search iterations
+- **Source aggregation**: Automatic citation collection
+- **Save to Whim**: Export research as document
+
 ## Admin Features
 
 As an admin, you can:
@@ -313,13 +355,15 @@ npx jest src/__tests__/lib/memory/cleanup.test.ts
 npx jest --watch
 ```
 
-**Current Status**: 290 tests passing (100% pass rate)
+**Current Status**: 374 tests passing (100% pass rate)
 - Memory system (42 tests): cleanup, extraction, loading, storage
 - Agent system (58 tests): core, tools, context manager
 - Web search & fetch (27 tests): search, rate limiting, content fetching, fallback chain, cache
 - Context orchestration (8 tests)
 - Prompt analysis (31 tests)
 - Whim system (124 tests): editor, converter, storage, validation
+- Paper/Repo readers (40+ tests): parsing, analysis, validation
+- Deep Research (40+ tests): API integration, flow control
 
 ### E2E Tests (Playwright)
 
@@ -339,15 +383,21 @@ npx playwright test --headed
 npx playwright test --debug
 ```
 
-**Current Status**: 73 tests in 8 files (100% pass rate)
-- `01-ui-and-ux.e2e.ts` - UI/UX fundamentals (14 tests)
-- `02-authenticated-chat.e2e.ts` - Chat flows (5 tests)
-- `03-visual-and-accessibility.e2e.ts` - Accessibility (8 tests)
-- `04-core-features.e2e.ts` - Core functionality (18 tests)
-- `05-whim-editor.e2e.ts` - Whim editor (7 tests)
-- `06-pro-mode.e2e.ts` - PRO mode (18 tests)
-- `web-fetch-resilience.spec.ts` - Web fetch fallback chain (7 tests)
-- `financial-web-fetch.spec.ts` - Financial website handling (18 tests)
+**Current Status**: 142 tests in 14 files (100% pass rate)
+- `01-ui-and-ux.e2e.ts` - UI/UX fundamentals
+- `02-authenticated-chat.e2e.ts` - Chat flows
+- `03-visual-and-accessibility.e2e.ts` - Accessibility
+- `04-core-features.e2e.ts` - Core functionality
+- `05-whim-editor.e2e.ts` - Whim editor
+- `06-pro-mode.e2e.ts` - PRO mode
+- `07-paper-reader.e2e.ts` - Paper Reader
+- `08-pdf-tools.e2e.ts` - PDF tools
+- `09-image-upload.e2e.ts` - Image upload
+- `10-welcome-navigator.e2e.ts` - Welcome page
+- `11-repo-reader.e2e.ts` - Repo Reader
+- `12-deep-research.e2e.ts` - Deep Research
+- `web-fetch-resilience.spec.ts` - Web fetch fallback chain
+- `financial-web-fetch.spec.ts` - Financial website handling
 
 See [docs/TESTING.md](./docs/TESTING.md) for detailed testing guide.
 
